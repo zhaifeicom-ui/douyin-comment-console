@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>抖音评论运营</title>
+    <link rel="stylesheet" href="/app/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace-card" aria-label="评论抓取设置">
+        <div class="workspace-toolbar">
+          <div>
+            <p class="eyebrow">评论运营工作台</p>
+            <h1>评论抓取设置</h1>
+            <p class="subtitle">采集上限与 AI 意向判定条件，保存后对本次及后续抓取生效。</p>
+          </div>
+          <span id="connectionBadge" class="status-badge status-muted">正在检查连接…</span>
+        </div>
+
+        <form id="settingsForm" class="settings-form">
+          <label class="field-label" for="timeRange">AI 判定评论时间范围</label>
+          <div class="select-wrap">
+            <select id="timeRange" name="commentTimeRangeDays">
+              <option value="1">最近 1 天</option>
+              <option value="2">最近 2 天</option>
+              <option value="3">最近 3 天</option>
+              <option value="7">最近 7 天</option>
+              <option value="14">最近 14 天</option>
+              <option value="30">最近 30 天</option>
+            </select>
+          </div>
+          <p class="field-help">原始一级评论会完整入库；仅对时间范围内的评论进行 AI 判定，减少无效 Token 消耗。</p>
+
+          <label class="field-label" for="maxComments">每视频抓取上限</label>
+          <input id="maxComments" name="maxCommentsPerVideo" type="number" min="0" max="10000" step="1" value="0" />
+          <p class="field-help">0 = 不限。建议设置上限，避免评论量过大导致任务耗时过长。</p>
+
+          <div class="field-label checkbox-label">抓取后自动判定（AI）</div>
+          <label class="toggle-row">
+            <input id="aiIntentEnabled" name="aiIntentEnabled" type="checkbox" />
+            <span class="toggle" aria-hidden="true"></span>
+            <span>开启 AI 意向判定</span>
+          </label>
+          <p class="field-help">开启后，AI 会结合视频内容、评论内容和目标客户描述，对评论进行意向分类。</p>
+
+          <label class="field-label" for="targetCustomer">想找什么客户</label>
+          <textarea id="targetCustomer" name="targetCustomer" rows="5" maxlength="2000" placeholder="例如：想要购买演唱会门票的客户，想要找票务服务的客户"></textarea>
+          <p class="field-help">描述越具体，AI 越容易区分目标客户、普通互动和无关评论。</p>
+
+          <div id="saveMessage" class="save-message" role="status" aria-live="polite"></div>
+          <div class="form-actions">
+            <button id="cancelButton" class="button button-secondary" type="button">取消</button>
+            <button class="button button-primary" type="submit"><span aria-hidden="true">✓</span> 保存设置</button>
+          </div>
+        </form>
+      </section>
+    </main>
+    <script src="/app/app.js" defer></script>
+  </body>
+</html>
