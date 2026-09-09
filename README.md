@@ -1,6 +1,6 @@
 # 🎵 Douyin Comment CLI
 
-[![test](https://github.com/Yht20927/douyin-cli/actions/workflows/test.yml/badge.svg)](https://github.com/Yht20927/douyin-cli/actions/workflows/test.yml)
+[![test](https://github.com/zhaifeicom-ui/douyin-comment-console/actions/workflows/test.yml/badge.svg)](https://github.com/zhaifeicom-ui/douyin-comment-console/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > 适用版本: v4 · 最后更新: 2026-08-27 · 维护者: Yht20927

@@ -4,13 +4,13 @@
   "description": "抖音评论运营 CLI — Bridge Framework（油猴 + WebSocket），含 AI 人格化回复、节奏守卫、SQLite 记忆层、推广引擎",
   "license": "MIT",
   "author": "Yht20927",
-  "homepage": "https://github.com/Yht20927/douyin-cli#readme",
+  "homepage": "https://github.com/zhaifeicom-ui/douyin-comment-console#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Yht20927/douyin-cli.git"
+    "url": "git+https://github.com/zhaifeicom-ui/douyin-comment-console.git"
   },
   "bugs": {
-    "url": "https://github.com/Yht20927/douyin-cli/issues"
+    "url": "https://github.com/zhaifeicom-ui/douyin-comment-console/issues"
   },
   "keywords": [
     "douyin", "tiktok", "comment", "automation", "bridge",

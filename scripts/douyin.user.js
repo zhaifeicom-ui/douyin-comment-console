@@ -22,7 +22,7 @@
   const CONFIG = {
     server: 'http://127.0.0.1:19422',
     site: 'douyin.com',
-    token: '901853b42dac9ccd8954cb4d9c994bd8377ea01b40939815',  // 填入 config.json 中的 bridge.token
+    token: '',  // 填入 config.json 中的 bridge.token
     reconnectDelay: 2000,
   };
 
