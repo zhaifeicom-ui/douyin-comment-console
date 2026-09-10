@@ -40,7 +40,8 @@
 | 🛡️ 风控断路器 | 10 分钟内 post 失败 ≥3 次自动暂停 |
 | 📥 视频下载 | 下载视频+音频（BGM），支持 ffmpeg 截图多模态分析 |
 | 📊 运营仪表盘 | 本地 HTML 可视化，含推广活动卡片 |
-| 💾 持久化记忆 | SQLite schema v8（events / users / videos / comments / corpus / failures / campaigns / llm_usage / drafts） |
+| 🎯 **线索工作台** | 关键词找客 → 视频/评论意向判定 → 证据展示 → AI 回复草稿 → 人工审核发布 |
+| 💾 持久化记忆 | SQLite schema v10（events / users / videos / comments / corpus / failures / campaigns / llm_usage / drafts / intent） |
 
 ---
 
@@ -80,15 +81,22 @@ node cli.js getReply <aweme_id> --batch
 http://127.0.0.1:19422/app
 ```
 
-当前前端提供评论抓取设置：
+当前前端提供一套“找客—审核—回复”工作流：
 
-- AI 判定评论时间范围
-- 每个视频的评论抓取上限（0 表示不限）
-- 是否开启抓取后的 AI 意向判定
-- 目标客户描述
-- 保存/取消设置
+- **智能找客**：输入“谁 + 需求 + 场景”，扩展关键词并筛选候选视频
+- **线索审核**：选择视频、抓取评论、按用户/评论搜索和按意向筛选
+- **AI 意向判定**：结合视频标题/描述（可选截图）与评论，输出分数、标签、阶段、判定依据和下一步动作
+- **AI 回复草稿**：针对单条评论生成 8–45 字草稿，默认只写入本地，需人工确认后发布
+- **设置中心**：意向阈值、视频理解模式、目标客户画像、回复语气与下一步策略
 
-设置保存在 `storage/ui-settings.json`，不会把 Bridge token 或 LLM API Key 注入浏览器页面。前端使用本地 HttpOnly 会话，且只接受来自本机的请求。现有 CLI、Bridge 和高级命令继续保留，后续可以在此页面上逐步开放搜索、评论分析、回复审核等功能。
+推荐操作顺序：
+
+```text
+打开 /app → 设置客户画像 → 智能找客 → 选择候选视频 → 抓取评论
+→ AI 判定意向 → 筛选高意向 → 生成草稿 → 人工修改/确认 → 发布回复
+```
+
+设置保存在 `storage/ui-settings.json`，不会把 Bridge token 或 LLM API Key 注入浏览器页面。前端使用本地 HttpOnly 会话，且只接受来自本机的请求。现有 CLI、Bridge 和高级命令继续保留；工作台只是新增的受控入口，不会删除原有代码。
 
 ---
 

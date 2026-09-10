@@ -5,6 +5,11 @@
 
   const elements = {
     connectionBadge: $('connectionBadge'),
+    currentViewLabel: $('currentViewLabel'),
+    metricVideos: $('metricVideos'),
+    metricComments: $('metricComments'),
+    metricQualified: $('metricQualified'),
+    metricPending: $('metricPending'),
     campaignTab: $('campaignTab'),
     manualTab: $('manualTab'),
     campaignView: $('campaignView'),
@@ -37,7 +42,13 @@
     videoList: $('videoList'),
     selectedVideoTitle: $('selectedVideoTitle'),
     selectedVideoMeta: $('selectedVideoMeta'),
+    analyzeCommentsButton: $('analyzeCommentsButton'),
     repliedFilter: $('repliedFilter'),
+    commentSearch: $('commentSearch'),
+    intentFilter: $('intentFilter'),
+    commentsSummary: $('commentsSummary'),
+    intentThresholdBadge: $('intentThresholdBadge'),
+    videoInboxCount: $('videoInboxCount'),
     refreshCommentsButton: $('refreshCommentsButton'),
     commentsMessage: $('commentsMessage'),
     commentsEmpty: $('commentsEmpty'),
@@ -53,6 +64,10 @@
     searchVideoCount: $('searchVideoCount'),
     maxComments: $('maxComments'),
     timeRange: $('timeRange'),
+    intentThreshold: $('intentThreshold'),
+    intentAnalysisMode: $('intentAnalysisMode'),
+    replyTone: $('replyTone'),
+    replyCta: $('replyCta'),
     aiIntentEnabled: $('aiIntentEnabled'),
     keywordExpandEnabled: $('keywordExpandEnabled'),
     keywordExpandCount: $('keywordExpandCount'),
@@ -124,6 +139,27 @@
     }).format(date);
   }
 
+  function formatNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? new Intl.NumberFormat('zh-CN').format(n) : '0';
+  }
+
+  function intentTone(score, comment = {}) {
+    const value = Number(score);
+    if (!Number.isFinite(value)) return 'none';
+    const threshold = Number(state.settings?.intentThreshold ?? 65);
+    if (comment.isTarget || value >= Math.max(80, threshold + 15)) return 'high';
+    if (value >= threshold) return 'mid';
+    if (value >= 35) return 'low';
+    return 'none';
+  }
+
+  function qualified(comment) {
+    const threshold = Number(state.settings?.intentThreshold ?? 65);
+    if (comment?.isTarget === false) return false;
+    return Boolean(comment?.isTarget === true || Number(comment?.intentScore) >= threshold);
+  }
+
   function shortId(value) {
     return String(value || '').slice(0, 8);
   }
@@ -149,6 +185,31 @@
     elements.campaignTab.setAttribute('aria-selected', String(isCampaign));
     elements.manualTab.classList.toggle('is-active', !isCampaign);
     elements.manualTab.setAttribute('aria-selected', String(!isCampaign));
+    if (elements.currentViewLabel) {
+      elements.currentViewLabel.textContent = isCampaign ? '智能找客' : '线索审核';
+    }
+  }
+
+  async function loadOverview() {
+    try {
+      const payload = await api('/api/app/overview');
+      const overview = payload.overview || {};
+      if (elements.metricVideos) elements.metricVideos.textContent = formatNumber(overview.videos || 0);
+      if (elements.metricComments) elements.metricComments.textContent = formatNumber(overview.comments || 0);
+      if (elements.metricQualified) elements.metricQualified.textContent = formatNumber(overview.qualifiedLeads || 0);
+      if (elements.metricPending) elements.metricPending.textContent = formatNumber(overview.pendingReplies || 0);
+      if (elements.intentThresholdBadge) {
+        elements.intentThresholdBadge.textContent = `意向阈值 ${overview.intentThreshold ?? state.settings?.intentThreshold ?? 65}`;
+      }
+    } catch (error) {
+      // 概览是增强信息，Bridge 启动初期失败不应阻断主工作流。
+      if (elements.metricVideos && elements.metricVideos.textContent === '—') {
+        elements.metricVideos.textContent = '0';
+        elements.metricComments.textContent = '0';
+        elements.metricQualified.textContent = '0';
+        elements.metricPending.textContent = '0';
+      }
+    }
   }
 
   // ── 一体化运营 ──
@@ -289,6 +350,7 @@
       state.campaign = finished;
       setProgressBar(100);
       renderCampaignResult();
+      await loadOverview();
       const succeeded = finished.result?.replyStats?.succeeded || 0;
       const failed = finished.result?.replyStats?.failed || 0;
       setMessage(
@@ -320,6 +382,10 @@
     elements.searchVideoCount.value = String(settings.searchVideoCount ?? 5);
     elements.maxComments.value = String(settings.maxCommentsPerVideo ?? 5);
     elements.timeRange.value = String(settings.commentTimeRangeDays ?? 2);
+    elements.intentThreshold.value = String(settings.intentThreshold ?? 65);
+    elements.intentAnalysisMode.value = settings.intentAnalysisMode || 'text-only';
+    elements.replyTone.value = settings.replyTone || '自然、真诚、简洁';
+    elements.replyCta.value = settings.replyCta || '';
     elements.aiIntentEnabled.checked = settings.aiIntentEnabled !== false;
     elements.keywordExpandEnabled.checked = settings.keywordExpandEnabled !== false;
     elements.keywordExpandCount.value = String(settings.keywordExpandCount ?? 10);
@@ -342,6 +408,10 @@
       elements.campaignReplyText.value = settings.defaultReplyText || '';
       elements.campaignExpandCount.disabled = !elements.campaignExpandEnabled.checked;
     }
+    if (elements.intentThresholdBadge) {
+      elements.intentThresholdBadge.textContent = `意向阈值 ${settings.intentThreshold ?? 65}`;
+    }
+    renderDiscoverConfig();
   }
 
   function readSettingsForm() {
@@ -350,6 +420,10 @@
       searchVideoCount: Number(elements.searchVideoCount.value),
       maxCommentsPerVideo: Number(elements.maxComments.value),
       commentTimeRangeDays: Number(elements.timeRange.value),
+      intentThreshold: Number(elements.intentThreshold.value),
+      intentAnalysisMode: elements.intentAnalysisMode.value,
+      replyTone: elements.replyTone.value.trim(),
+      replyCta: elements.replyCta.value.trim(),
       aiIntentEnabled: elements.aiIntentEnabled.checked,
       keywordExpandEnabled: elements.keywordExpandEnabled.checked,
       keywordExpandCount: Number(elements.keywordExpandCount.value),
@@ -398,7 +472,7 @@
   // ── 连接状态 ──
 
   function updateConnectionUI() {
-    if (state.lastConnected === state.connected) return;
+    const changed = state.lastConnected !== state.connected;
     state.lastConnected = state.connected;
     const hint = state.connected
       ? ''
@@ -407,6 +481,14 @@
     elements.campaignRunButton.title = state.connected ? '' : '抖音未连接，无法启动';
     elements.discoverButton.disabled = !state.connected;
     elements.discoverButton.title = state.connected ? '' : '抖音未连接，无法筛选';
+    if (elements.analyzeCommentsButton) {
+      elements.analyzeCommentsButton.disabled = !state.connected || !state.selectedAwemeId || state.settings?.aiIntentEnabled === false;
+      elements.analyzeCommentsButton.title = !state.connected
+        ? '抖音未连接，无法分析'
+        : !state.selectedAwemeId ? '请先选择视频'
+          : state.settings?.aiIntentEnabled === false ? '设置中已关闭 AI 意向判定' : '';
+    }
+    if (!changed) return;
     elements.connectionHint.hidden = state.connected;
     elements.connectionHint.textContent = hint;
     elements.discoverHint.hidden = state.connected;
@@ -438,6 +520,7 @@
   }
 
   function renderVideos() {
+    if (elements.videoInboxCount) elements.videoInboxCount.textContent = formatNumber(state.videos.length);
     elements.videoList.replaceChildren();
     if (state.videos.length === 0) {
       elements.videoList.append(
@@ -479,6 +562,7 @@
     state.selectedVideo = video || state.videos.find(item => item.awemeId === awemeId) || { awemeId };
     updateSelectedHeader();
     renderVideos();
+    updateConnectionUI();
     loadComments();
   }
 
@@ -486,6 +570,7 @@
     if (!state.selectedAwemeId) {
       elements.commentList.replaceChildren();
       elements.commentsEmpty.hidden = false;
+      elements.commentsSummary.textContent = '选择视频后开始分析';
       return;
     }
     elements.commentsEmpty.hidden = true;
@@ -493,13 +578,27 @@
     try {
       const params = new URLSearchParams({ aweme_id: state.selectedAwemeId });
       if (elements.repliedFilter.value) params.set('replied', elements.repliedFilter.value);
+      if (elements.commentSearch.value.trim()) params.set('q', elements.commentSearch.value.trim());
+      if (elements.intentFilter.value === 'qualified') {
+        params.set('intent_min', String(state.settings?.intentThreshold ?? 65));
+        params.set('target_only', 'true');
+      } else if (elements.intentFilter.value === 'analyzed') {
+        params.set('has_intent', 'true');
+      } else if (elements.intentFilter.value === 'pending') {
+        params.set('replied', 'false');
+      }
       const payload = await api(`/api/app/comments?${params.toString()}`);
       state.comments = payload.comments || [];
       renderComments();
+      const qualifiedCount = state.comments.filter(qualified).length;
+      elements.commentsSummary.textContent = state.comments.length
+        ? `当前 ${formatNumber(state.comments.length)} 条 · 高意向 ${formatNumber(qualifiedCount)} 条`
+        : '当前筛选条件下暂无评论';
       setMessage(elements.commentsMessage, state.comments.length ? `已载入 ${state.comments.length} 条候选评论` : '暂无候选评论');
     } catch (error) {
       state.comments = [];
       renderComments();
+      elements.commentsSummary.textContent = '评论读取失败';
       setMessage(elements.commentsMessage, error.message, 'error');
     }
   }
@@ -514,6 +613,77 @@
     }
   }
 
+  async function analyzeSelectedComments() {
+    if (!state.selectedAwemeId) {
+      setMessage(elements.commentsMessage, '请先选择一个视频', 'error');
+      return;
+    }
+    if (state.settings?.aiIntentEnabled === false) {
+      setMessage(elements.commentsMessage, '设置中已关闭 AI 意向判定，请先在设置里开启', 'warn');
+      return;
+    }
+    elements.analyzeCommentsButton.disabled = true;
+    setMessage(elements.commentsMessage, '意向分析任务已提交…');
+    try {
+      const payload = await api(`/api/app/videos/${encodeURIComponent(state.selectedAwemeId)}/analyze`, {
+        method: 'POST',
+        body: JSON.stringify({
+          mode: state.settings?.intentAnalysisMode || 'text-only',
+          intentThreshold: Number(state.settings?.intentThreshold ?? 65),
+          maxComments: Number(state.settings?.maxCommentsPerVideo ?? 200) || 200,
+          targetCustomer: state.settings?.targetCustomer || '',
+        }),
+      });
+      const finished = await waitForJob(payload.job, job => {
+        setMessage(elements.commentsMessage, `${job.message} · ${job.progress}%`);
+      });
+      const result = finished.result || {};
+      setMessage(
+        elements.commentsMessage,
+        `分析完成：已判定 ${result.analyzedCount || 0} 条，高意向 ${result.highIntentCount || 0} 条${result.warnings?.length ? `；${result.warnings.join('；')}` : ''}`,
+        result.warnings?.length ? 'warn' : '',
+      );
+      if (result.video?.title && state.selectedVideo) state.selectedVideo.title = result.video.title;
+      await Promise.all([loadComments(), loadVideos(), loadOverview()]);
+    } catch (error) {
+      setMessage(elements.commentsMessage, error.message, 'error');
+    } finally {
+      updateConnectionUI();
+    }
+  }
+
+  async function draftComment(comment, textarea, draftButton, status) {
+    if (!state.selectedAwemeId || !comment?.cid || comment.replied) return;
+    draftButton.disabled = true;
+    status.textContent = '正在生成草稿…';
+    status.className = 'reply-state';
+    try {
+      const payload = await api(`/api/app/comments/${encodeURIComponent(comment.cid)}/draft`, {
+        method: 'POST',
+        body: JSON.stringify({
+          aweme_id: state.selectedAwemeId,
+          targetCustomer: state.settings?.targetCustomer || '',
+          replyTone: state.settings?.replyTone || '',
+          replyCta: state.settings?.replyCta || '',
+        }),
+      });
+      const finished = await waitForJob(payload.job, job => {
+        status.textContent = `${job.message} · ${job.progress}%`;
+      });
+      const draft = finished.result?.reply || '';
+      if (!draft) throw new Error('AI 没有生成有效草稿');
+      textarea.value = draft;
+      comment.replyDraft = draft;
+      status.textContent = '草稿已生成，请审核后发布';
+      status.className = 'reply-state warn';
+    } catch (error) {
+      status.textContent = error.message || '草稿生成失败';
+      status.className = 'reply-state error';
+    } finally {
+      draftButton.disabled = false;
+    }
+  }
+
   function buildCommentCard(comment) {
     const status = el('div', { className: 'reply-state' });
     const textarea = el('textarea', {
@@ -521,17 +691,31 @@
       placeholder: comment.replied ? '这条评论已经回复过' : '输入自定义回复…',
       maxlength: '1000',
     });
+    textarea.value = comment.replyDraft || '';
+    const draftButton = el('button', {
+      className: 'button button-secondary draft-button',
+      type: 'button',
+      text: '✦ 生成草稿',
+    });
     const submit = el('button', {
       className: 'button button-primary',
       type: 'button',
-      text: comment.replied ? '已回复' : '提交回复',
+      text: comment.replied ? '已回复' : '发布回复',
     });
+
+    const score = Number(comment.intentScore);
+    const hasIntent = Number.isFinite(score);
+    const isQualified = qualified(comment);
+    const tone = intentTone(score, comment);
 
     if (comment.replied) {
       textarea.disabled = true;
+      draftButton.disabled = true;
       submit.disabled = true;
       status.textContent = comment.replyCid ? `已回复 · reply_cid ${shortId(comment.replyCid)}` : '已回复';
     }
+
+    draftButton.addEventListener('click', () => draftComment(comment, textarea, draftButton, status));
 
     submit.addEventListener('click', async () => {
       const text = textarea.value.trim();
@@ -557,7 +741,7 @@
         });
         status.textContent = '回复已发布';
         status.className = 'reply-state';
-        await Promise.all([loadComments(), loadVideos()]);
+        await Promise.all([loadComments(), loadVideos(), loadOverview()]);
       } catch (error) {
         status.textContent = error.message || '回复失败';
         status.className = 'reply-state error';
@@ -566,7 +750,7 @@
     });
 
     return el('article', {
-      className: `comment-card ${comment.replied ? 'replied' : ''}`,
+      className: `comment-card ${comment.replied ? 'replied' : ''} ${isQualified ? 'is-qualified' : ''}`,
     }, [
       el('div', { className: 'comment-top' }, [
         el('div', { className: 'comment-user' }, [
@@ -579,9 +763,26 @@
         ]),
       ]),
       el('p', { className: 'comment-text', text: comment.text || '[贴纸评论]' }),
+      hasIntent
+        ? el('div', { className: 'intent-row' }, [
+          el('span', { className: `intent-pill ${tone}`, text: `${comment.intentLabel || '已判定'} · ${score}` }),
+          comment.intentStage ? el('span', { className: 'stage-pill', text: comment.intentStage }) : null,
+          comment.priority ? el('span', { className: 'priority-pill', text: `优先级 ${comment.priority}/5` }) : null,
+        ])
+        : el('div', { className: 'intent-row' }, [
+          el('span', { className: 'intent-pill none', text: '尚未判定' }),
+          el('span', { className: 'stage-pill', text: '点击 AI 判定意向' }),
+        ]),
+      hasIntent && comment.intentReason
+        ? el('p', { className: 'intent-evidence' }, [
+          el('strong', { text: '判定依据：' }),
+          document.createTextNode(comment.intentReason),
+        ])
+        : null,
       el('div', { className: 'comment-footer' }, [
         textarea,
         el('div', { className: 'reply-controls' }, [
+          draftButton,
           submit,
           status,
         ]),
@@ -664,6 +865,7 @@
           : '完成，没有筛选出候选视频',
       );
       await loadVideos();
+      await loadOverview();
       if (state.videos.length > 0) {
         selectVideo(state.videos[0].awemeId, state.videos[0]);
       }
@@ -688,7 +890,7 @@
       await waitForJob(payload.job, job => {
         setMessage(elements.commentsMessage, `${job.message} · ${job.progress}%`);
       });
-      await Promise.all([loadComments(), loadVideos()]);
+      await Promise.all([loadComments(), loadVideos(), loadOverview()]);
     } catch (error) {
       setMessage(elements.commentsMessage, error.message, 'error');
     } finally {
@@ -734,7 +936,14 @@
   elements.discoverForm.addEventListener('submit', startDiscover);
   elements.resolveButton.addEventListener('click', resolveDirectVideo);
   elements.refreshCommentsButton.addEventListener('click', fetchSelectedComments);
+  elements.analyzeCommentsButton.addEventListener('click', analyzeSelectedComments);
   elements.repliedFilter.addEventListener('change', loadComments);
+  elements.intentFilter.addEventListener('change', loadComments);
+  let commentSearchTimer = null;
+  elements.commentSearch.addEventListener('input', () => {
+    clearTimeout(commentSearchTimer);
+    commentSearchTimer = setTimeout(loadComments, 260);
+  });
   elements.settingsButton.addEventListener('click', openSettings);
   elements.closeSettingsButton.addEventListener('click', closeSettings);
   elements.cancelSettingsButton.addEventListener('click', closeSettings);
@@ -742,7 +951,9 @@
 
   renderCampaignResult();
   setInterval(checkConnection, 3000);
-  Promise.all([loadSettings(), checkConnection(), loadVideos()]).catch(error => {
+  Promise.all([loadSettings(), checkConnection(), loadVideos(), loadOverview()]).then(() => {
+    updateConnectionUI();
+  }).catch(error => {
     setMessage(elements.campaignMessage, error.message, 'error');
     checkConnection();
   });
