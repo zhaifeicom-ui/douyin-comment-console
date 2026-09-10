@@ -7,55 +7,215 @@
     <link rel="stylesheet" href="/app/styles.css" />
   </head>
   <body>
-    <main class="app-shell">
-      <section class="workspace-card" aria-label="评论抓取设置">
-        <div class="workspace-toolbar">
-          <div>
-            <p class="eyebrow">评论运营工作台</p>
-            <h1>评论抓取设置</h1>
-            <p class="subtitle">采集上限与 AI 意向判定条件，保存后对本次及后续抓取生效。</p>
-          </div>
-          <span id="connectionBadge" class="status-badge status-muted">正在检查连接…</span>
+    <main class="console-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Douyin Comment Console</p>
+          <h1>评论运营</h1>
+          <p class="subtitle">AI 扩展关键词，筛选候选视频，抓取候选评论，统一一键回复。</p>
         </div>
+        <div class="topbar-actions">
+          <span id="connectionBadge" class="status-badge status-muted">正在检查连接…</span>
+          <button id="settingsButton" class="icon-button" type="button" aria-label="设置">设置</button>
+        </div>
+      </header>
 
-        <form id="settingsForm" class="settings-form">
-          <label class="field-label" for="timeRange">AI 判定评论时间范围</label>
-          <div class="select-wrap">
-            <select id="timeRange" name="commentTimeRangeDays">
-              <option value="1">最近 1 天</option>
-              <option value="2">最近 2 天</option>
-              <option value="3">最近 3 天</option>
-              <option value="7">最近 7 天</option>
-              <option value="14">最近 14 天</option>
-              <option value="30">最近 30 天</option>
-            </select>
+      <nav class="view-tabs" role="tablist" aria-label="功能视图">
+        <button id="campaignTab" class="view-tab is-active" type="button" role="tab" aria-selected="true">一体化一键运营</button>
+        <button id="manualTab" class="view-tab" type="button" role="tab" aria-selected="false">单视频精细回复</button>
+      </nav>
+
+      <section id="campaignView" class="workspace-grid" role="tabpanel" aria-label="一体化一键运营">
+        <aside class="panel campaign-panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">一体化运营</p>
+              <h2>一键启动</h2>
+            </div>
           </div>
-          <p class="field-help">原始一级评论会完整入库；仅对时间范围内的评论进行 AI 判定，减少无效 Token 消耗。</p>
 
-          <label class="field-label" for="maxComments">每视频抓取上限</label>
-          <input id="maxComments" name="maxCommentsPerVideo" type="number" min="0" max="10000" step="1" value="0" />
-          <p class="field-help">0 = 不限。建议设置上限，避免评论量过大导致任务耗时过长。</p>
+          <form id="campaignForm" class="stack-form">
+            <label class="field-label" for="campaignKeyword">客户关键词</label>
+            <textarea id="campaignKeyword" name="keyword" rows="3" placeholder="例如：想要购买演唱会门票的客户"></textarea>
+            <p class="field-help">AI 会基于它扩展出一批搜索关键词用于视频检索。</p>
 
-          <div class="field-label checkbox-label">抓取后自动判定（AI）</div>
-          <label class="toggle-row">
-            <input id="aiIntentEnabled" name="aiIntentEnabled" type="checkbox" />
-            <span class="toggle" aria-hidden="true"></span>
-            <span>开启 AI 意向判定</span>
-          </label>
-          <p class="field-help">开启后，AI 会结合视频内容、评论内容和目标客户描述，对评论进行意向分类。</p>
+            <div class="field-row">
+              <div>
+                <label class="field-label compact" for="campaignVideoCount">候选视频数</label>
+                <input id="campaignVideoCount" name="videoCount" type="number" min="1" max="20" step="1" value="5" />
+              </div>
+              <div>
+                <label class="field-label compact" for="campaignCommentsPerVideo">每个视频评论数</label>
+                <input id="campaignCommentsPerVideo" name="commentsPerVideo" type="number" min="0" max="100" step="1" value="5" />
+              </div>
+            </div>
 
-          <label class="field-label" for="targetCustomer">想找什么客户</label>
-          <textarea id="targetCustomer" name="targetCustomer" rows="5" maxlength="2000" placeholder="例如：想要购买演唱会门票的客户，想要找票务服务的客户"></textarea>
-          <p class="field-help">描述越具体，AI 越容易区分目标客户、普通互动和无关评论。</p>
+            <div class="field-row expand-row">
+              <label class="toggle-row">
+                <input id="campaignExpandEnabled" name="keywordExpandEnabled" type="checkbox" checked />
+                <span class="toggle" aria-hidden="true"></span>
+                <span>AI 扩展关键词</span>
+              </label>
+              <div>
+                <label class="field-label compact" for="campaignExpandCount">扩展数量</label>
+                <input id="campaignExpandCount" name="keywordExpandCount" type="number" min="2" max="30" step="1" value="10" />
+              </div>
+            </div>
 
-          <div id="saveMessage" class="save-message" role="status" aria-live="polite"></div>
-          <div class="form-actions">
-            <button id="cancelButton" class="button button-secondary" type="button">取消</button>
-            <button class="button button-primary" type="submit"><span aria-hidden="true">✓</span> 保存设置</button>
+            <label class="field-label" for="campaignReplyText">统一回复内容</label>
+            <textarea id="campaignReplyText" name="replyText" rows="4" maxlength="1000" placeholder="对所有候选评论统一发送的回复文案"></textarea>
+            <p class="field-help">留空则只检索视频和抓取候选评论，不执行回复。</p>
+
+            <div id="connectionHint" class="inline-message warn" hidden></div>
+            <button id="campaignRunButton" class="button button-primary button-wide" type="submit">一键启动并统一回复</button>
+          </form>
+
+          <div id="campaignMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <div id="campaignProgress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+            <div id="campaignProgressFill" class="progress-fill"></div>
           </div>
-        </form>
+        </aside>
+
+        <section class="panel campaign-results-panel" aria-label="执行结果">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">执行结果</p>
+              <h2>候选视频与统一回复</h2>
+            </div>
+            <span id="campaignStats" class="result-stats"></span>
+          </div>
+
+          <div id="keywordBlock" hidden>
+            <p class="block-label">搜索关键词</p>
+            <div id="keywordChips" class="keyword-chips"></div>
+          </div>
+          <div id="campaignWarnings" class="inline-message warn" hidden></div>
+          <div id="campaignVideoList" class="campaign-video-list"></div>
+        </section>
+      </section>
+
+      <section id="manualView" class="workspace-grid" role="tabpanel" aria-label="单视频精细回复" hidden>
+        <aside class="panel discover-panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">视频筛选</p>
+              <h2>筛选候选视频</h2>
+            </div>
+          </div>
+
+          <form id="discoverForm" class="stack-form">
+            <label class="field-label" for="discoverKeyword">客户关键词</label>
+            <textarea id="discoverKeyword" name="keyword" rows="3" placeholder="例如：想要购买演唱会门票的客户"></textarea>
+            <p class="field-help">留空时自动使用设置里的“想找什么客户”。</p>
+            <div id="discoverConfig" class="discover-config" role="status" aria-live="polite"></div>
+            <div id="discoverHint" class="inline-message warn" hidden></div>
+            <button id="discoverButton" class="button button-primary button-wide" type="submit">筛选候选视频，抓取候选评论</button>
+          </form>
+
+          <div class="divider"></div>
+          <div class="direct-input">
+            <input id="directLink" type="text" placeholder="粘贴视频链接或视频 ID" />
+            <button id="resolveButton" class="button button-secondary" type="button">解析</button>
+          </div>
+
+          <div id="discoverMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <div id="videoList" class="video-list"></div>
+        </aside>
+
+        <section class="panel comments-panel">
+          <div class="panel-head comments-head">
+            <div>
+              <p class="panel-kicker">评论回复</p>
+              <h2 id="selectedVideoTitle">请先选择视频</h2>
+              <p id="selectedVideoMeta" class="panel-meta"></p>
+            </div>
+            <div class="comment-tools">
+              <select id="repliedFilter" aria-label="回复状态筛选">
+                <option value="">全部评论</option>
+                <option value="false">未回复</option>
+                <option value="true">已回复</option>
+              </select>
+              <button id="refreshCommentsButton" class="button button-secondary" type="button">抓取候选评论</button>
+            </div>
+          </div>
+
+          <div id="commentsMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <div id="commentsEmpty" class="empty-state">从左侧筛选候选视频，或直接粘贴视频链接开始。</div>
+          <div id="commentList" class="comment-list"></div>
+        </section>
       </section>
     </main>
+
+    <dialog id="settingsDialog" class="settings-dialog">
+      <form id="settingsForm" method="dialog">
+        <div class="dialog-head">
+          <div>
+            <p class="panel-kicker">视频筛选与抓取设置</p>
+            <h2>候选视频与候选评论</h2>
+          </div>
+          <button id="closeSettingsButton" class="icon-button" type="button" aria-label="关闭">×</button>
+        </div>
+
+        <label class="field-label" for="targetCustomer">想找什么客户</label>
+        <textarea id="targetCustomer" name="targetCustomer" rows="4" maxlength="2000"></textarea>
+        <p class="field-help">一体化流程的默认客户关键词；主界面关键词可临时覆盖一次。</p>
+
+        <div class="field-row">
+          <div>
+            <label class="field-label compact" for="searchVideoCount">候选视频数</label>
+            <input id="searchVideoCount" name="searchVideoCount" type="number" min="1" max="20" step="1" />
+          </div>
+          <div>
+            <label class="field-label compact" for="maxComments">每个视频评论数</label>
+            <input id="maxComments" name="maxCommentsPerVideo" type="number" min="0" max="10000" step="1" />
+          </div>
+        </div>
+        <p class="field-help">每个候选视频抓取多少条候选评论；填 0 表示抓取该候选视频的全部评论。</p>
+
+        <div class="field-row">
+          <div>
+            <label class="field-label compact" for="keywordExpandCount">AI 扩词数量</label>
+            <input id="keywordExpandCount" name="keywordExpandCount" type="number" min="2" max="30" step="1" />
+          </div>
+          <div>
+            <label class="field-label compact" for="timeRange">候选评论时间范围</label>
+            <div class="select-wrap">
+              <select id="timeRange" name="commentTimeRangeDays">
+                <option value="1">最近 1 天</option>
+                <option value="2">最近 2 天</option>
+                <option value="3">最近 3 天</option>
+                <option value="7">最近 7 天</option>
+                <option value="14">最近 14 天</option>
+                <option value="30">最近 30 天</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <label class="toggle-row">
+          <input id="keywordExpandEnabled" name="keywordExpandEnabled" type="checkbox" checked />
+          <span class="toggle" aria-hidden="true"></span>
+          <span>搜索前用 AI 扩展关键词</span>
+        </label>
+
+        <label class="field-label" for="defaultReplyText">统一回复默认文案</label>
+        <textarea id="defaultReplyText" name="defaultReplyText" rows="3" maxlength="1000" placeholder="一体化流程一键回复时使用的默认文案"></textarea>
+        <p class="field-help">主界面每次启动前可以临时修改，不覆盖这里保存的默认值。</p>
+
+        <label class="toggle-row">
+          <input id="aiIntentEnabled" name="aiIntentEnabled" type="checkbox" checked />
+          <span class="toggle" aria-hidden="true"></span>
+          <span>抓取后自动判定（AI）</span>
+        </label>
+
+        <div id="settingsMessage" class="inline-message" role="status" aria-live="polite"></div>
+        <div class="dialog-actions">
+          <button id="cancelSettingsButton" class="button button-secondary" type="button">取消</button>
+          <button id="saveSettingsButton" class="button button-primary" type="submit">保存设置</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="/app/app.js" defer></script>
   </body>
 </html>

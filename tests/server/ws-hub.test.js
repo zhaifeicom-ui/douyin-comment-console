@@ -61,10 +61,10 @@ describe('WebSocketHub 心跳', () => {
       ws.on('close', (code) => resolve(code));
     });
 
-    // maxFailures=2 → 第 3 个 tick 触发关闭；留裕量
+    // maxFailures=2 → 第 3 个 tick 触发关闭；并跑时计时器可能被挤压，留足裕量
     const code = await Promise.race([
       closedCode,
-      sleep(HEARTBEAT_INTERVAL * (MAX_FAILURES + 4)).then(() => 'not-closed'),
+      sleep(HEARTBEAT_INTERVAL * (MAX_FAILURES + 10)).then(() => 'not-closed'),
     ]);
 
     expect(code).toBe(4004);

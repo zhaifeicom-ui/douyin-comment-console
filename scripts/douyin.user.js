@@ -32,6 +32,10 @@
   let retryCount = 0;          // 连续重试次数（指数退避用）
   let pollFailCount = 0;       // 连续 poll 失败次数
 
+  function isMainDouyinPage() {
+    return location.hostname === 'www.douyin.com' || location.hostname === 'douyin.com';
+  }
+
   function gmFetch(url, opts) {
     // 自动注入 Authorization header
     var headers = Object.assign({}, opts && opts.headers);
@@ -48,6 +52,10 @@
 
   // ── HTTP 连接管理（通过 GM_xmlhttpRequest 绕过 PNA）──
   async function connect() {
+    if (!isMainDouyinPage()) {
+      console.warn('[Bridge] 跳过非抖音主站页面：' + location.href);
+      return;
+    }
     if (!registered) {
       try {
         console.log('[Bridge] Registering via GM_xmlhttpRequest...');

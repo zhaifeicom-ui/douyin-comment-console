@@ -75,3 +75,48 @@ describe('LLMClient constructor', () => {
     delete process.env.OPENAI_MODEL;
   });
 });
+
+describe('LLMClient.expandSearchKeywords', () => {
+  it('解析 keywords JSON，清洗去重并截断数量', async () => {
+    const c = new LLMClient({ apiKey: 'test' });
+    c.complete = async () => [
+      '```json',
+      '{"keywords":["演唱会门票","票务转让","求购演出票","演唱会门票","  ","怎么买演唱会票","这是一个特别长的关键词以至于超过四十个字符会被直接丢弃掉的例子这里再补一些字确保超过四十个字符"]}',
+      '```',
+    ].join('\n');
+
+    const keywords = await c.expandSearchKeywords('想买演唱会门票', 10);
+
+    expect(keywords).toEqual([
+      '演唱会门票',
+      '票务转让',
+      '求购演出票',
+      '怎么买演唱会票',
+    ]);
+  });
+
+  it('支持直接返回 JSON 数组', async () => {
+    const c = new LLMClient({ apiKey: 'test' });
+    c.complete = async () => '["健身私教","减脂训练营"]';
+
+    const keywords = await c.expandSearchKeywords('想健身的人', 5);
+
+    expect(keywords).toEqual(['健身私教', '减脂训练营']);
+  });
+
+  it('无有效关键词时抛出明确错误', async () => {
+    const c = new LLMClient({ apiKey: 'test' });
+    c.complete = async () => '{"keywords":[]}';
+
+    await expect(c.expandSearchKeywords('测试', 5)).rejects.toThrow('AI 未返回有效关键词');
+  });
+
+  it('空种子关键词直接报错，不发请求', async () => {
+    const c = new LLMClient({ apiKey: 'test' });
+    let called = false;
+    c.complete = async () => { called = true; return '{}'; };
+
+    await expect(c.expandSearchKeywords('   ', 5)).rejects.toThrow('缺少客户关键词');
+    expect(called).toBe(false);
+  });
+});

@@ -256,3 +256,82 @@ describe('Router _call 三路分发', () => {
     expect(res.body.ok).toBe(true);
   });
 });
+
+describe('Router App API（一体化运营）', () => {
+  let registry;
+
+  beforeEach(() => {
+    registry = new ConnectionRegistry();
+  });
+
+  it('POST /api/app/campaign/run 把请求体交给控制器并返回 202', async () => {
+    const runBodies = [];
+    const app = {
+      runCampaign(body) {
+        runBodies.push(body);
+        return { id: 'job-1', type: 'campaign:run' };
+      },
+      getJob(id) {
+        return { id, type: 'campaign:run', status: 'queued', progress: 0, message: '任务已排队', meta: {} };
+      },
+    };
+    const router = new Router({ registry, wsHub: makeHubStub(), token: '', app });
+
+    // 先访问 /app 建立会话
+    const pageRes = makeRes();
+    await router.handle(makeReq({ url: '/app' }), pageRes);
+    expect(pageRes.statusCode).toBe(200);
+    const cookie = pageRes._headers['Set-Cookie'];
+    const session = decodeURIComponent(cookie.match(/app_session=([^;]+)/)[1]);
+
+    const res = makeRes();
+    await router.handle(makeReq({
+      method: 'POST',
+      url: '/api/app/campaign/run',
+      headers: { cookie: `app_session=${session}` },
+      body: { keyword: '演唱会门票', videoCount: 3, replyText: '你好' },
+    }), res);
+
+    expect(res.statusCode).toBe(202);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.job.id).toBe('job-1');
+    expect(runBodies).toEqual([{ keyword: '演唱会门票', videoCount: 3, replyText: '你好' }]);
+  });
+
+  it('未连接抖音时 POST /api/app/campaign/run 返回 409 而不是排队任务', async () => {
+    const app = {
+      runCampaign() {
+        throw new Error('抖音尚未连接：请先在浏览器打开 www.douyin.com 主站并确认右上角显示“抖音已连接”');
+      },
+      getJob() {
+        return null;
+      },
+    };
+    const router = new Router({ registry, wsHub: makeHubStub(), token: '', app });
+
+    const pageRes = makeRes();
+    await router.handle(makeReq({ url: '/app' }), pageRes);
+    const cookie = pageRes._headers['Set-Cookie'];
+    const session = decodeURIComponent(cookie.match(/app_session=([^;]+)/)[1]);
+
+    const res = makeRes();
+    await router.handle(makeReq({
+      method: 'POST',
+      url: '/api/app/campaign/run',
+      headers: { cookie: `app_session=${session}` },
+      body: { keyword: '演唱会门票', videoCount: 3 },
+    }), res);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toContain('抖音尚未连接');
+  });
+
+  it('无会话访问 /api/app/* 返回 401', async () => {
+    const router = new Router({ registry, wsHub: makeHubStub(), token: '' });
+    const res = makeRes();
+    await router.handle(makeReq({ url: '/api/app/settings' }), res);
+    expect(res.statusCode).toBe(401);
+    expect(res.body.error).toContain('App session expired');
+  });
+});

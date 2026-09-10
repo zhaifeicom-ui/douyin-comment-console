@@ -13,8 +13,14 @@
     "url": "https://github.com/zhaifeicom-ui/douyin-comment-console/issues"
   },
   "keywords": [
-    "douyin", "tiktok", "comment", "automation", "bridge",
-    "tampermonkey", "cli", "sqlite"
+    "douyin",
+    "tiktok",
+    "comment",
+    "automation",
+    "bridge",
+    "tampermonkey",
+    "cli",
+    "sqlite"
   ],
   "main": "cli.js",
   "bin": {
@@ -45,6 +51,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "playwright-core": "^1.63.0",
     "protobufjs": "^8.6.4",
     "protobufjs-cli": "^2.5.5",
     "vitest": "^4.1.8"
