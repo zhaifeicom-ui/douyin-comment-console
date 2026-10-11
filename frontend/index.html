@@ -3,22 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0c1724" />
-    <title>评论运营工作台</title>
+    <meta name="theme-color" content="#142433" />
+    <title>AI 获客中台 · Comment Console</title>
     <link rel="stylesheet" href="/app/styles.css" />
   </head>
   <body>
     <div class="app-frame">
       <aside class="sidebar" aria-label="主导航">
         <div class="brand-lockup">
-          <span class="brand-mark" aria-hidden="true">◎</span>
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <div>
             <p class="brand-name">COMMENT<br />CONSOLE</p>
-            <p class="brand-caption">Douyin lead workspace</p>
+            <p class="brand-caption">抖音线索运营台</p>
           </div>
         </div>
 
-        <div class="sidebar-label">工作流</div>
+        <div class="sidebar-label">导航</div>
         <nav class="side-nav" role="tablist" aria-label="工作流导航">
           <button id="campaignTab" class="side-nav-item is-active" type="button" role="tab" aria-selected="true">
             <span class="nav-icon" aria-hidden="true">⌁</span>
@@ -30,13 +30,28 @@
             <span><strong>线索审核</strong><small>判定意向并回复</small></span>
             <span class="nav-arrow" aria-hidden="true">›</span>
           </button>
+          <button id="automationTab" class="side-nav-item" type="button" role="tab" aria-selected="false">
+            <span class="nav-icon" aria-hidden="true">✦</span>
+            <span><strong>自动化工作流</strong><small>搜索、判定与动作</small></span>
+            <span class="nav-arrow" aria-hidden="true">›</span>
+          </button>
+          <button id="accountsTab" class="side-nav-item" type="button" role="tab" aria-selected="false">
+            <span class="nav-icon" aria-hidden="true">◎</span>
+            <span><strong>账号池</strong><small>多账号分工与限额</small></span>
+            <span class="nav-arrow" aria-hidden="true">›</span>
+          </button>
+          <button id="inboxTab" class="side-nav-item" type="button" role="tab" aria-selected="false">
+            <span class="nav-icon" aria-hidden="true">▱</span>
+            <span><strong>消息聚合</strong><small>真实私信收件箱</small></span>
+            <span class="nav-arrow" aria-hidden="true">›</span>
+          </button>
         </nav>
 
-        <div class="sidebar-label sidebar-label-spaced">当前状态</div>
+        <div class="sidebar-label sidebar-label-spaced">连接</div>
         <div class="connection-card">
           <span class="connection-dot" aria-hidden="true"></span>
           <div>
-            <span class="connection-title">Bridge 连接</span>
+            <span class="connection-title">抖音账号</span>
             <span id="connectionBadge" class="status-badge status-muted">正在检查连接…</span>
           </div>
         </div>
@@ -48,61 +63,56 @@
           <div class="workflow-step"><span>04</span><p>审核并回复</p></div>
         </div>
 
-        <div class="sidebar-footer">
-          <span class="privacy-icon" aria-hidden="true">⌾</span>
-          <span>数据保存在本机<br />发布前默认人工审核</span>
-        </div>
       </aside>
 
       <main class="main-content">
         <header class="topbar">
-          <div class="breadcrumb"><span>工作台</span><span aria-hidden="true">/</span><strong id="currentViewLabel">智能找客</strong></div>
+          <div class="breadcrumb"><span>运营台</span><span aria-hidden="true">/</span><strong id="currentViewLabel">智能找客</strong></div>
           <div class="topbar-actions">
-            <span class="topbar-hint">本地运行 · 私有数据</span>
+            <button id="taskCenterButton" class="icon-button task-center-button" type="button" aria-label="打开任务与历史"><span aria-hidden="true">◴</span><span>任务与历史</span><b id="taskActiveBadge" class="task-active-badge" hidden>0</b></button>
+            <button id="tutorialButton" class="icon-button" type="button" aria-label="打开使用教程"><span aria-hidden="true">?</span><span>使用教程</span></button>
             <button id="settingsButton" class="icon-button" type="button" aria-label="打开设置"><span aria-hidden="true">⚙</span><span>设置</span></button>
           </div>
         </header>
 
-        <section class="hero-banner">
-          <div class="hero-copy">
-            <p class="eyebrow">AI LEAD WORKSPACE <span>·</span> V1</p>
-            <h1>把评论里的需求，变成可跟进的客户。</h1>
-            <p class="subtitle">从目标客户画像出发，发现相关视频，识别真实需求，再用一条自然的回复开启沟通。</p>
-            <div class="hero-tags"><span>视频内容理解</span><span>评论意向评分</span><span>人工审核发布</span></div>
-          </div>
-          <div class="hero-orbit" aria-hidden="true"><i></i><i></i><i></i><strong>AI<br />LEAD</strong></div>
-        </section>
-
         <section class="metric-grid" aria-label="运营概览">
-          <article class="metric-card metric-primary"><div class="metric-icon">◈</div><div><p>已沉淀视频</p><strong id="metricVideos">—</strong><small>本地工作台</small></div></article>
-          <article class="metric-card"><div class="metric-icon">✦</div><div><p>已抓取评论</p><strong id="metricComments">—</strong><small>评论池总量</small></div></article>
-          <article class="metric-card"><div class="metric-icon metric-icon-accent">◎</div><div><p>已识别意向</p><strong id="metricQualified">—</strong><small>达到当前阈值</small></div></article>
-          <article class="metric-card"><div class="metric-icon metric-icon-warn">↗</div><div><p>待跟进</p><strong id="metricPending">—</strong><small>尚未回复</small></div></article>
+          <article class="metric-card metric-primary"><div class="metric-icon">◈</div><div><p>已沉淀视频</p><strong id="metricVideos">—</strong></div></article>
+          <article class="metric-card"><div class="metric-icon">✦</div><div><p>已抓取评论</p><strong id="metricComments">—</strong></div></article>
+          <article class="metric-card"><div class="metric-icon metric-icon-accent">◎</div><div><p>高意向线索</p><strong id="metricQualified">—</strong></div></article>
+          <article class="metric-card"><div class="metric-icon metric-icon-warn">↗</div><div><p>待跟进</p><strong id="metricPending">—</strong></div></article>
+          <article class="metric-card metric-card-control"><div class="metric-icon">◉</div><div><p>在线账号</p><strong id="metricAccounts">—</strong></div></article>
+          <article class="metric-card metric-card-control"><div class="metric-icon">⟳</div><div><p>运行中的工作流</p><strong id="metricWorkflows">—</strong></div></article>
         </section>
 
         <section id="campaignView" class="view-section" role="tabpanel" aria-label="智能找客">
-          <div class="section-heading"><div><p class="section-kicker">01 / DISCOVER</p><h2>智能找客</h2><p>输入你真正想找的人，系统会扩展搜索词并整理候选视频。</p></div><span class="section-status"><i></i>准备就绪</span></div>
+          <div class="section-heading"><div><p class="section-kicker">找客任务</p><h2>把评论里的需求找出来</h2><p>先定义客户，再用真实评论验证需求。</p></div><span class="section-status"><i></i>准备就绪</span></div>
           <div class="workspace-grid campaign-grid">
             <aside class="panel campaign-panel">
-              <div class="panel-head"><div><p class="panel-kicker">客户画像</p><h3>从需求开始</h3></div><span class="step-number">01</span></div>
+              <div class="panel-head"><div><p class="panel-kicker">任务参数</p><h3>从需求开始</h3><p class="panel-meta">搜索和筛选会在后台执行，你可以继续创建下一条任务。</p></div><span class="step-number">01</span></div>
               <form id="campaignForm" class="stack-form">
                 <label class="field-label" for="campaignKeyword">你想找什么客户？</label>
                 <textarea id="campaignKeyword" name="keyword" rows="3" placeholder="例如：近期想购买演唱会门票、正在询问购票方式的人"></textarea>
-                <p class="field-help">写清楚“谁 + 需求 + 场景”，AI 扩词和后续判定会更准确。</p>
+                 <label class="field-label" for="campaignManualKeywords">视频搜索关键词（可选，支持手动输入）</label>
+                <textarea id="campaignManualKeywords" name="manualKeywords" rows="2" placeholder="例如：薛之谦门票、薛之谦抢票、演唱会求票；每行或逗号分隔"></textarea>
+                <label class="field-label" for="campaignCommentKeywords">评论线索词（可选，建议填写）</label>
+                <textarea id="campaignCommentKeywords" name="commentKeywords" rows="3" placeholder="例如：没抢到、太难抢、求票、有没有靠谱推荐、哪里可以买"></textarea>
                 <div class="field-row"><div><label class="field-label compact" for="campaignVideoCount">候选视频</label><input id="campaignVideoCount" name="videoCount" type="number" min="1" max="20" step="1" value="5" /></div><div><label class="field-label compact" for="campaignCommentsPerVideo">每视频评论</label><input id="campaignCommentsPerVideo" name="commentsPerVideo" type="number" min="0" max="100" step="1" value="5" /></div></div>
+                <div class="field-row"><div><label class="field-label compact" for="campaignVideoTimeRange">视频发布时间</label><div class="select-wrap"><select id="campaignVideoTimeRange"><option value="1">最近 1 天</option><option value="3">最近 3 天</option><option value="7">最近 7 天</option><option value="14">最近 14 天</option><option value="30" selected>最近 30 天</option><option value="90">最近 90 天</option><option value="0">不限时间</option></select></div></div><div><label class="field-label compact" for="campaignCommentTimeRange">评论时间</label><div class="select-wrap"><select id="campaignCommentTimeRange"><option value="1">最近 1 天</option><option value="2" selected>最近 2 天</option><option value="3">最近 3 天</option><option value="7">最近 7 天</option><option value="14">最近 14 天</option><option value="30">最近 30 天</option><option value="0">不限时间</option></select></div></div></div>
                 <div class="control-card"><div class="control-card-copy"><strong>AI 扩展搜索词</strong><span>让搜索覆盖更多真实表达</span></div><label class="toggle-row compact-toggle"><input id="campaignExpandEnabled" name="keywordExpandEnabled" type="checkbox" checked /><span class="toggle" aria-hidden="true"></span></label><div class="control-card-number"><label class="field-label compact" for="campaignExpandCount">数量</label><input id="campaignExpandCount" name="keywordExpandCount" type="number" min="2" max="30" step="1" value="10" /></div></div>
+                <div class="control-card"><div class="control-card-copy"><strong>AI 精准意向筛选</strong><span>只保留符合画像且达到分数的评论</span></div><label class="toggle-row compact-toggle"><input id="campaignAiFilterEnabled" name="aiFilterEnabled" type="checkbox" checked /><span class="toggle" aria-hidden="true"></span></label><div class="control-card-number"><label class="field-label compact" for="campaignIntentThreshold">最低分</label><input id="campaignIntentThreshold" name="intentThreshold" type="number" min="0" max="100" step="1" value="65" /></div></div>
                 <label class="field-label" for="campaignReplyText">批量回复文案（可选）</label>
-                <textarea id="campaignReplyText" name="replyText" rows="2" maxlength="1000" placeholder="留空时只找客和判定，不自动发布；填写后仍建议先人工抽查"></textarea>
-                <div class="safety-note"><span aria-hidden="true">✦</span><span>智能找客只负责发现和筛选，回复默认进入人工审核。</span></div>
+                <textarea id="campaignReplyText" name="replyText" rows="2" maxlength="1000" placeholder="留空时只找客和判定；填写后默认保存为草稿，不会直接发布"></textarea>
+                <label class="field-label compact" for="campaignDeliveryMode">处理方式</label>
+                <div class="select-wrap"><select id="campaignDeliveryMode"><option value="draft" selected>保存为草稿，人工审核后发布（推荐）</option><option value="publish">直接批量发布（谨慎使用）</option></select></div>
                 <div id="connectionHint" class="inline-message warn" hidden></div>
-                <button id="campaignRunButton" class="button button-primary button-wide" type="submit"><span>开始发现客户</span><span aria-hidden="true">→</span></button>
+                <button id="campaignRunButton" class="button button-primary button-wide" type="submit"><span>开始筛选客户</span></button>
               </form>
               <div id="campaignMessage" class="inline-message" role="status" aria-live="polite"></div>
               <div id="campaignProgress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div id="campaignProgressFill" class="progress-fill"></div></div>
             </aside>
 
             <section class="panel campaign-results-panel" aria-label="执行结果">
-              <div class="panel-head result-head"><div><p class="panel-kicker">DISCOVERY QUEUE</p><h3>候选视频</h3><p class="panel-meta">完成搜索后，候选结果会按照可跟进程度整理。</p></div><span id="campaignStats" class="result-stats"></span></div>
+              <div class="panel-head result-head"><div><p class="panel-kicker">筛选结果</p><h3>高质量候选视频</h3><p class="panel-meta">按评论量、时效和需求线索排序；每条结果都有入选依据。</p></div><span id="campaignStats" class="result-stats"></span></div>
               <div id="keywordBlock" class="keyword-block" hidden><p class="block-label">本次覆盖的搜索表达</p><div id="keywordChips" class="keyword-chips"></div></div>
               <div id="campaignWarnings" class="inline-message warn" hidden></div>
               <div id="campaignVideoList" class="campaign-video-list"></div>
@@ -111,10 +121,10 @@
         </section>
 
         <section id="manualView" class="view-section" role="tabpanel" aria-label="线索审核" hidden>
-          <div class="section-heading"><div><p class="section-kicker">02 / QUALIFY & REPLY</p><h2>线索审核</h2><p>先看证据，再决定是否回复；AI 只给建议，不替你发布。</p></div><span class="section-status section-status-review"><i></i>需要人工判断</span></div>
+          <div class="section-heading"><div><p class="section-kicker">线索审核</p><h2>看证据，再决定回复</h2><p>AI 负责整理和判定，最终动作始终由你确认。</p></div><span class="section-status section-status-review"><i></i>需要人工判断</span></div>
           <div class="workspace-grid review-grid">
             <aside class="panel discover-panel">
-              <div class="panel-head"><div><p class="panel-kicker">VIDEO INBOX</p><h3>选择一个视频</h3></div><span class="step-number">02</span></div>
+              <div class="panel-head"><div><p class="panel-kicker">视频收件箱</p><h3>选择一个视频</h3></div><span class="step-number">02</span></div>
               <form id="discoverForm" class="stack-form">
                 <label class="field-label" for="discoverKeyword">客户关键词</label>
                 <textarea id="discoverKeyword" name="keyword" rows="2" placeholder="留空使用设置中的客户画像"></textarea>
@@ -129,8 +139,8 @@
             </aside>
 
             <section class="panel comments-panel">
-              <div class="panel-head comments-head"><div class="selected-video-copy"><p class="panel-kicker">LEAD REVIEW</p><h3 id="selectedVideoTitle">请先选择视频</h3><p id="selectedVideoMeta" class="panel-meta"></p></div><div class="comment-tools"><button id="analyzeCommentsButton" class="button button-primary" type="button" disabled><span aria-hidden="true">✦</span> AI 判定意向</button><button id="refreshCommentsButton" class="button button-secondary" type="button">重新抓取</button></div></div>
-              <div class="comment-toolbar"><div class="toolbar-search"><span aria-hidden="true">⌕</span><input id="commentSearch" type="search" placeholder="搜索评论或用户" /></div><select id="intentFilter" aria-label="意向筛选"><option value="">全部评论</option><option value="qualified">仅高意向</option><option value="analyzed">已判定</option><option value="pending">待回复</option></select><select id="repliedFilter" aria-label="回复状态筛选"><option value="">全部状态</option><option value="false">未回复</option><option value="true">已回复</option></select></div>
+              <div class="panel-head comments-head"><div class="selected-video-copy"><p class="panel-kicker">评论证据</p><h3 id="selectedVideoTitle">请先选择视频</h3><p id="selectedVideoMeta" class="panel-meta"></p></div><div class="comment-tools"><button id="analyzeCommentsButton" class="button button-primary" type="button" disabled><span aria-hidden="true">✦</span> AI 判定意向</button><button id="refreshCommentsButton" class="button button-secondary" type="button">重新抓取</button></div></div>
+              <div class="comment-toolbar"><div class="toolbar-search"><span aria-hidden="true">⌕</span><input id="commentSearch" type="search" placeholder="搜索评论或用户" /></div><select id="intentFilter" aria-label="意向筛选"><option value="">全部评论</option><option value="drafts">待审核草稿</option><option value="qualified">仅高意向</option><option value="analyzed">已判定</option><option value="pending">待回复</option></select><select id="repliedFilter" aria-label="回复状态筛选"><option value="">全部状态</option><option value="false">未回复</option><option value="true">已回复</option></select></div>
               <div class="review-summary"><span id="commentsSummary">选择视频后开始分析</span><span id="intentThresholdBadge" class="threshold-badge">意向阈值 —</span></div>
               <div id="commentsMessage" class="inline-message" role="status" aria-live="polite"></div>
               <div id="commentsEmpty" class="empty-state"><div class="empty-illustration">◎</div><strong>这里会出现可跟进的评论</strong><span>先搜索视频，再点击“AI 判定意向”。</span></div>
@@ -138,15 +148,69 @@
             </section>
           </div>
         </section>
+
+        <section id="automationView" class="view-section command-view" role="tabpanel" aria-label="自动化工作流" hidden>
+          <div class="section-heading command-heading"><div><p class="section-kicker">AI AUTOMATION</p><h2>让 AI 按规则持续找客</h2><p>一个工作流可以绑定多个抖音账号；默认先生成草稿，确认后再开启自动动作。</p></div><span class="section-status section-status-command"><i></i><span id="automationStatus">本地规则中心</span></span></div>
+          <div class="command-summary" id="automationSummary">正在读取工作流…</div>
+          <div class="automation-grid">
+            <section class="panel workflow-list-panel"><div class="panel-head"><div><p class="panel-kicker">WORKFLOWS</p><h3>我的自动化</h3><p class="panel-meta">每条规则独立计数、暂停和回溯。</p></div><button id="newWorkflowButton" class="button button-primary" type="button">＋ 新建工作流</button></div><div id="workflowList" class="workflow-list"></div></section>
+            <section class="panel workflow-editor-panel"><div class="panel-head"><div><p class="panel-kicker">WORKFLOW BUILDER</p><h3 id="workflowEditorTitle">新建获客工作流</h3><p class="panel-meta">先选择账号，再定义搜索、判定和动作。</p></div><span class="step-number">01</span></div>
+              <form id="workflowForm" class="stack-form">
+                <input id="workflowId" type="hidden" />
+                <label class="field-label" for="workflowName">工作流名称</label><input id="workflowName" type="text" maxlength="80" placeholder="例如：薛之谦求票线索 · 晚间巡检" />
+                <label class="field-label" for="workflowKeywords">视频搜索关键词</label><textarea id="workflowKeywords" rows="2" placeholder="每行一个，例如：薛之谦求票、薛之谦没抢到票"></textarea>
+                <label class="field-label" for="workflowCommentKeywords">评论线索词</label><textarea id="workflowCommentKeywords" rows="2" placeholder="没抢到、好难抢、求票、有没有靠谱推荐"></textarea>
+                <div class="workflow-field-block"><div class="workflow-field-head"><strong>绑定抖音账号</strong><button id="refreshAccountsButton" class="text-button" type="button">刷新账号</button></div><div id="workflowAccountPicker" class="account-picker"><span class="muted-copy">还没有检测到抖音账号，请先打开并登录抖音标签页。</span></div></div>
+                <div class="workflow-actions-grid"><label class="action-toggle"><input id="workflowActionComment" type="checkbox" /><span><b>评论</b><small>对高意向评论执行</small></span></label><label class="action-toggle"><input id="workflowActionDm" type="checkbox" /><span><b>私信</b><small>对新线索发送私信</small></span></label><label class="action-toggle"><input id="workflowActionLike" type="checkbox" /><span><b>点赞</b><small>已记录，自动动作接入中</small></span></label><label class="action-toggle"><input id="workflowActionFollow" type="checkbox" /><span><b>关注</b><small>桥接接口接入中</small></span></label></div>
+                <label class="field-label compact" for="workflowCommentTemplate">评论模板（可选）</label><textarea id="workflowCommentTemplate" rows="2" maxlength="1000" placeholder="开启评论动作后必填；建议自然、具体，不承诺未确认信息"></textarea>
+                <label class="field-label compact" for="workflowDmTemplate">私信模板（可选）</label><textarea id="workflowDmTemplate" rows="2" maxlength="1000" placeholder="开启私信动作后必填，可使用 {nickname} 等变量"></textarea>
+                <div class="field-row"><div><label class="field-label compact" for="workflowTrigger">运行方式</label><div class="select-wrap"><select id="workflowTrigger"><option value="manual">仅手动运行</option><option value="schedule" selected>按间隔自动巡检</option></select></div></div><div><label class="field-label compact" for="workflowSchedule">巡检间隔</label><div class="select-wrap"><select id="workflowSchedule"><option value="15">每 15 分钟</option><option value="30" selected>每 30 分钟</option><option value="60">每 1 小时</option><option value="240">每 4 小时</option></select></div></div></div>
+                <div class="field-row"><div><label class="field-label compact" for="workflowMode">动作模式</label><div class="select-wrap"><select id="workflowMode"><option value="draft" selected>先保存草稿，人工审核</option><option value="publish">自动发布（谨慎）</option></select></div></div><div></div></div>
+                <div class="workflow-safety"><label class="toggle-row"><input id="workflowApproval" type="checkbox" checked /><span class="toggle" aria-hidden="true"></span><span>需要人工审核（推荐）</span></label><div class="field-row"><div><label class="field-label compact" for="workflowCommentLimit">每账号每日评论上限</label><input id="workflowCommentLimit" type="number" min="0" max="200" value="10" /></div><div><label class="field-label compact" for="workflowDmLimit">每账号每日私信上限</label><input id="workflowDmLimit" type="number" min="0" max="100" value="5" /></div></div></div>
+                <div id="workflowMessage" class="inline-message" role="status" aria-live="polite"></div><div class="dialog-actions workflow-editor-actions"><button id="deleteWorkflowButton" class="button button-danger" type="button" hidden>删除</button><span></span><button id="saveWorkflowButton" class="button button-primary" type="submit">保存工作流</button></div>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section id="accountsView" class="view-section command-view" role="tabpanel" aria-label="账号池" hidden>
+          <div class="section-heading command-heading"><div><p class="section-kicker">ACCOUNT POOL</p><h2>每个标签页都是一个账号</h2><p>账号身份、连接心跳和每日动作额度独立展示；关闭标签页不会影响其他账号。</p></div><button id="refreshAccountsPageButton" class="button button-secondary" type="button">刷新账号状态</button></div>
+          <div id="accountsSummary" class="command-summary">正在读取账号池…</div><div id="accountList" class="account-grid"></div>
+        </section>
+
+        <section id="inboxView" class="view-section command-view" role="tabpanel" aria-label="私信收件箱" hidden>
+          <div class="section-heading command-heading"><div><p class="section-kicker">REAL DM INBOX</p><h2>私信收件箱</h2><p>这里只显示抖音真实私信；评论会作为线索证据附在会话下，不会再伪装成聊天。</p></div><button id="refreshInboxButton" class="button button-secondary" type="button">刷新收件箱</button></div>
+          <div class="inbox-layout"><aside class="panel inbox-accounts-panel"><div class="panel-head"><div><p class="panel-kicker">CONVERSATIONS</p><h3>私信会话</h3></div><button id="newInboxButton" class="text-button" type="button">＋ 新建私信</button></div><select id="inboxAccountFilter" class="inbox-account-filter"><option value="">全部账号</option></select><form id="inboxNewConversationForm" class="inbox-new-conversation" hidden novalidate><label class="field-label compact" for="inboxNewAccount">发送账号</label><select id="inboxNewAccount"></select><label class="field-label compact" for="inboxNewPeerUid">对方 UID</label><input id="inboxNewPeerUid" type="text" inputmode="numeric" maxlength="64" placeholder="抖音用户 UID" /><label class="field-label compact" for="inboxNewText">第一条私信</label><textarea id="inboxNewText" rows="3" maxlength="1000" placeholder="写一条自然、具体的开场白"></textarea><div class="inbox-new-footer"><span id="inboxNewMessage" class="inline-message" role="status" aria-live="polite"></span><button id="inboxNewSendButton" class="button button-primary" type="submit">发起私信</button></div></form><div id="inboxConversationList" class="inbox-conversation-list"></div></aside><section class="panel inbox-message-panel"><div class="panel-head"><div><p class="panel-kicker">DIRECT MESSAGE</p><h3 id="inboxSelectedTitle">选择一个私信会话</h3><p id="inboxSelectedMeta" class="panel-meta"></p></div><span id="inboxMessageBadge" class="result-stats"></span></div><div id="inboxMessageList" class="inbox-message-list"><div class="empty-state"><div class="empty-illustration">▱</div><strong>还没有真实私信</strong><span>保持抖音账号在线，收到私信后会自动出现在这里。</span></div></div><section id="inboxEvidencePanel" class="inbox-evidence-panel" hidden><div class="inbox-subhead"><strong>线索证据</strong><span>来自该用户的历史评论，仅用于跟进参考</span></div><div id="inboxEvidenceList" class="inbox-evidence-list"></div></section><form id="inboxComposeForm" class="inbox-compose" novalidate><textarea id="inboxComposeText" rows="3" maxlength="1000" placeholder="选择一个会话后发送私信…" disabled></textarea><div class="inbox-compose-footer"><span id="inboxComposeMessage" class="inline-message" role="status" aria-live="polite"></span><button id="inboxSendButton" class="button button-primary" type="submit" disabled>发送私信</button></div></form></section></div>
+        </section>
       </main>
     </div>
 
     <dialog id="settingsDialog" class="settings-dialog">
       <form id="settingsForm" method="dialog">
-        <div class="dialog-head"><div><p class="panel-kicker">WORKSPACE SETTINGS</p><h2>线索判定与回复偏好</h2><p class="panel-meta">这些设置只保存在本机，用于后续任务的默认值。</p></div><button id="closeSettingsButton" class="icon-button close-button" type="button" aria-label="关闭">×</button></div>
+        <div class="dialog-head"><div><p class="panel-kicker">偏好设置</p><h2>工作台设置</h2></div><button id="closeSettingsButton" class="icon-button close-button" type="button" aria-label="关闭">×</button></div>
+        <div class="settings-section model-settings-section">
+          <div class="settings-title-row"><div><p class="settings-section-title">模型服务</p><p class="settings-section-description">连接你自己的 OpenAI 兼容接口，或等待平台服务开放。</p></div><span id="llmConfigBadge" class="status-badge status-muted">正在读取…</span></div>
+          <div class="service-mode-grid" role="radiogroup" aria-label="模型服务来源">
+            <label class="service-mode-card"><input id="llmModeCustom" type="radio" name="llmMode" value="custom" checked /><span class="service-mode-dot" aria-hidden="true"></span><span><strong>使用自己的 API</strong><small>填写兼容接口和 API Key，费用由接口提供方收取</small></span></label>
+            <label id="managedModeCard" class="service-mode-card is-unavailable"><input id="llmModeManaged" type="radio" name="llmMode" value="managed" disabled /><span class="service-mode-dot" aria-hidden="true"></span><span><strong>使用平台服务</strong><small id="managedModeHint">即将开放，无需自行准备 API Key</small></span></label>
+          </div>
+          <div id="customApiFields" class="model-fields">
+            <label class="field-label compact" for="llmBaseUrl">接口地址（Base URL）</label>
+            <input id="llmBaseUrl" name="llmBaseUrl" type="text" maxlength="2048" placeholder="https://api.openai.com/v1" autocomplete="url" />
+            <label class="field-label compact" for="llmApiKey">API Key</label>
+            <div class="secret-input"><input id="llmApiKey" name="llmApiKey" type="password" maxlength="4096" placeholder="留空则保留当前密钥" autocomplete="new-password" /><button id="toggleApiKeyButton" class="input-action" type="button">显示</button></div>
+            <p id="llmKeyHint" class="field-help">密钥仅保存在本机 config.json。</p>
+            <label class="field-label compact" for="llmModel">模型</label>
+            <div class="model-picker"><div><input id="llmModel" name="llmModel" type="text" list="llmModelOptions" maxlength="300" placeholder="点击获取模型，也可手动填写" autocomplete="off" /><datalist id="llmModelOptions"></datalist></div><button id="fetchModelsButton" class="button button-secondary" type="button">获取模型</button></div>
+          </div>
+          <div id="managedServiceFields" class="managed-service-note" hidden><strong>平台服务准备中</strong><span>接入你的服务器后，用户将在这里登录并查看套餐与剩余额度，无需接触模型 API Key。</span></div>
+          <div class="model-test-row"><button id="testLlmButton" class="button button-secondary" type="button"><span aria-hidden="true">↻</span> 发送 hi 并测试应用</button><span id="llmTestMessage" class="inline-message" role="status" aria-live="polite"></span></div>
+        </div>
         <div class="settings-section"><p class="settings-section-title">客户画像</p><label class="field-label" for="targetCustomer">想找什么客户</label><textarea id="targetCustomer" name="targetCustomer" rows="3" maxlength="2000" placeholder="例如：正在比较演唱会门票价格、想尽快购票的人"></textarea></div>
         <div class="field-row"><div><label class="field-label compact" for="searchVideoCount">候选视频数</label><input id="searchVideoCount" name="searchVideoCount" type="number" min="1" max="20" step="1" /></div><div><label class="field-label compact" for="maxComments">每视频评论数</label><input id="maxComments" name="maxCommentsPerVideo" type="number" min="0" max="10000" step="1" /></div></div>
-        <div class="field-row"><div><label class="field-label compact" for="keywordExpandCount">AI 扩词数量</label><input id="keywordExpandCount" name="keywordExpandCount" type="number" min="2" max="30" step="1" /></div><div><label class="field-label compact" for="timeRange">评论时间范围</label><div class="select-wrap"><select id="timeRange" name="commentTimeRangeDays"><option value="1">最近 1 天</option><option value="2">最近 2 天</option><option value="3">最近 3 天</option><option value="7">最近 7 天</option><option value="14">最近 14 天</option><option value="30">最近 30 天</option></select></div></div></div>
+        <div class="field-row"><div><label class="field-label compact" for="keywordExpandCount">AI 扩词数量</label><input id="keywordExpandCount" name="keywordExpandCount" type="number" min="2" max="30" step="1" /></div><div><label class="field-label compact" for="videoTimeRange">视频发布时间范围</label><div class="select-wrap"><select id="videoTimeRange" name="videoTimeRangeDays"><option value="1">最近 1 天</option><option value="3">最近 3 天</option><option value="7">最近 7 天</option><option value="14">最近 14 天</option><option value="30">最近 30 天</option><option value="90">最近 90 天</option><option value="180">最近 180 天</option><option value="0">不限时间</option></select></div></div></div>
+        <div class="settings-section"><p class="settings-section-title">视频质量筛选</p><div class="field-row"><div><label class="field-label compact" for="minVideoComments">视频至少评论数</label><input id="minVideoComments" name="minVideoComments" type="number" min="0" max="1000000" step="1" /></div><div><label class="field-label compact" for="sampleCommentsPerVideo">每视频抽样评论</label><input id="sampleCommentsPerVideo" name="sampleCommentsPerVideo" type="number" min="5" max="50" step="1" /></div></div><label class="field-label compact" for="minVideoLeadClues">抽样至少命中线索数</label><input id="minVideoLeadClues" name="minVideoLeadClues" type="number" min="0" max="20" step="1" /></div>
+        <label class="field-label compact" for="timeRange">评论时间范围</label><div class="select-wrap"><select id="timeRange" name="commentTimeRangeDays"><option value="1">最近 1 天</option><option value="2">最近 2 天</option><option value="3">最近 3 天</option><option value="7">最近 7 天</option><option value="14">最近 14 天</option><option value="30">最近 30 天</option></select></div>
         <div class="field-row"><div><label class="field-label compact" for="intentThreshold">最低意向分</label><input id="intentThreshold" name="intentThreshold" type="number" min="0" max="100" step="1" /></div><div><label class="field-label compact" for="intentAnalysisMode">视频理解模式</label><div class="select-wrap"><select id="intentAnalysisMode" name="intentAnalysisMode"><option value="text-only">标题 + 评论文本</option><option value="screenshots">视频截图 + 评论</option></select></div></div></div>
         <label class="toggle-row"><input id="keywordExpandEnabled" name="keywordExpandEnabled" type="checkbox" checked /><span class="toggle" aria-hidden="true"></span><span>搜索前用 AI 扩展关键词</span></label>
         <label class="toggle-row"><input id="aiIntentEnabled" name="aiIntentEnabled" type="checkbox" checked /><span class="toggle" aria-hidden="true"></span><span>抓取后允许 AI 判定意向</span></label>
@@ -155,6 +219,34 @@
         <div id="settingsMessage" class="inline-message" role="status" aria-live="polite"></div>
         <div class="dialog-actions"><button id="cancelSettingsButton" class="button button-secondary" type="button">取消</button><button id="saveSettingsButton" class="button button-primary" type="submit">保存设置</button></div>
       </form>
+    </dialog>
+
+    <dialog id="taskCenterDialog" class="task-center-dialog">
+      <div class="task-center-shell">
+        <div class="dialog-head"><div><p class="panel-kicker">任务记录</p><h2>任务与历史</h2><p class="panel-meta">任务可并行执行，完成结果会自动保留。</p></div><button id="closeTaskCenterButton" class="icon-button close-button" type="button" aria-label="关闭">×</button></div>
+        <div id="taskCenterSummary" class="task-center-summary">正在读取任务…</div>
+        <div id="taskList" class="task-list"></div>
+        <div class="dialog-actions"><button id="refreshTasksButton" class="button button-secondary" type="button">刷新进度</button><button id="dismissTaskCenterButton" class="button button-primary" type="button">继续填写参数</button></div>
+      </div>
+    </dialog>
+
+    <dialog id="tutorialDialog" class="tutorial-dialog">
+      <div class="tutorial-shell">
+        <div class="dialog-head"><div><p class="panel-kicker">快速开始</p><h2>四步开始使用</h2><p class="panel-meta">完成连接和模型配置后，就可以开始找客。</p></div><button id="closeTutorialButton" class="icon-button close-button" type="button" aria-label="关闭">×</button></div>
+        <div class="tutorial-status-grid">
+          <div class="tutorial-status is-ok"><span>1</span><div><strong>启动本地工作台</strong><small>当前页面已经成功启动</small></div><b>已完成</b></div>
+          <div id="tutorialModelStatus" class="tutorial-status"><span>2</span><div><strong>配置 AI 模型</strong><small>可使用自己的 API；平台服务稍后开放</small></div><b>待配置</b></div>
+          <div id="tutorialBridgeStatus" class="tutorial-status"><span>3</span><div><strong>连接抖音</strong><small>安装连接脚本，然后打开并登录抖音网页版</small></div><b>待连接</b></div>
+          <div class="tutorial-status"><span>4</span><div><strong>开始找客</strong><small>填写客户画像，先审核再发布回复</small></div><b>最后一步</b></div>
+        </div>
+        <div class="tutorial-actions">
+          <button id="tutorialConfigureModel" class="button button-primary" type="button">配置 AI 模型</button>
+          <a class="button button-secondary" href="/app/douyin.user.js" target="_blank" rel="noreferrer">安装抖音连接脚本</a>
+          <a class="button button-secondary" href="https://www.douyin.com/" target="_blank" rel="noreferrer">打开抖音网页版</a>
+        </div>
+        <div class="tutorial-tip"><strong>以后如何启动？</strong><span>Windows 用户直接双击项目目录中的“启动评论工作台.cmd”；也可以在终端运行 <code>npm start</code>。</span></div>
+        <div class="dialog-actions"><button id="finishTutorialButton" class="button button-primary" type="button">我知道了</button></div>
+      </div>
     </dialog>
 
     <script src="/app/app.js" defer></script>

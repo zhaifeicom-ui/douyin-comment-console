@@ -53,4 +53,18 @@ describe('ConnectionRegistry', () => {
     expect(list['douyin.com']).toHaveLength(2);
     expect(list['douyin.com'][0].url).toBe('https://douyin.com');
   });
+
+  it('HTTP 轮询超过心跳期限后不再算作在线，并可清理僵尸记录', () => {
+    const conn = registry.register('douyin.com', null);
+    const staleNow = Date.parse(conn.lastActivity) + 35001;
+    expect(registry.healthyCount({ pollingTtlMs: 35000, now: staleNow })).toBe(0);
+    expect(registry.list({ pollingTtlMs: 35000, now: staleNow })['douyin.com'][0].alive).toBe(false);
+    expect(registry.removeExpiredPolling(35000, staleNow)).toBe(1);
+    expect(registry.totalConnections).toBe(0);
+  });
+
+  it('活跃 WebSocket 不受 HTTP 轮询心跳期限影响', () => {
+    registry.register('douyin.com', { readyState: 1 });
+    expect(registry.healthyCount({ pollingTtlMs: 1, now: Date.now() + 60000 })).toBe(1);
+  });
 });

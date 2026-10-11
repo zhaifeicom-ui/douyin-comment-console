@@ -68,6 +68,72 @@ describe('LLMClient constructor', () => {
     expect(c.maxRetries).toBe(5);
   });
 
+  it('config.json 的 snake_case 字段完整覆盖 URL、Key 与请求参数', async () => {
+    const originalFetch = global.fetch;
+    let captured = null;
+    global.fetch = async (url, options) => {
+      captured = { url, options };
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: 'OK' } }] }),
+      };
+    };
+    try {
+      const c = new LLMClient({
+        api_key: 'fresh-key',
+        base_url: 'https://fresh.example/v1',
+        model: 'fresh-model',
+        max_tokens: 321,
+        timeout_ms: 12345,
+        max_retries: 4,
+      });
+      await c.complete([{ role: 'user', content: 'test' }]);
+      const body = JSON.parse(captured.options.body);
+      expect(captured.url).toBe('https://fresh.example/v1/chat/completions');
+      expect(captured.options.headers.Authorization).toBe('Bearer fresh-key');
+      expect(body.model).toBe('fresh-model');
+      expect(body.max_tokens).toBe(321);
+      expect(c.timeoutMs).toBe(12345);
+      expect(c.maxRetries).toBe(4);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('允许单次 LLM 调用覆盖超时与最大尝试次数', async () => {
+    const c = new LLMClient({ apiKey: 'test', maxRetries: 5, timeoutMs: 60000 });
+    let captured = null;
+    c._fetchWithRetry = async (_url, _headers, _body, _extract, requestOptions) => {
+      captured = requestOptions;
+      return 'ok';
+    };
+
+    await expect(c.complete([{ role: 'user', content: 'test' }], 0.1, {
+      maxRetries: 2,
+      timeoutMs: 45000,
+    })).resolves.toBe('ok');
+    expect(captured).toMatchObject({ maxRetries: 2, timeoutMs: 45000 });
+  });
+
+  it('单次调用将 maxRetries 设为 1 时只请求一次', async () => {
+    const originalFetch = global.fetch;
+    let calls = 0;
+    global.fetch = async () => {
+      calls += 1;
+      throw new TypeError('fetch failed');
+    };
+    try {
+      const c = new LLMClient({ apiKey: 'test', maxRetries: 5 });
+      await expect(c.complete([{ role: 'user', content: 'test' }], 0.1, {
+        maxRetries: 1,
+        timeoutMs: 1000,
+      })).rejects.toThrow('fetch failed');
+      expect(calls).toBe(1);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it('环境变量优先', () => {
     process.env.OPENAI_MODEL = 'env-model';
     const c = new LLMClient();

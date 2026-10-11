@@ -1,6 +1,8 @@
 // ==UserScript==
 // @name         Bridge: Douyin
 // @namespace    bridge-framework
+// @version      2.2.0
+// @description  Comment Console 本地抖音连接桥
 // @match        *://*.douyin.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
@@ -22,7 +24,7 @@
   const CONFIG = {
     server: 'http://127.0.0.1:19422',
     site: 'douyin.com',
-    token: '',  // 填入 config.json 中的 bridge.token
+    token: '',  // 从本机 /app/douyin.user.js 安装时由服务端注入，不在源码中保存凭证
     reconnectDelay: 2000,
   };
 
@@ -171,6 +173,8 @@
   // ═══════════════════════════════════════════════════════════
   // 抖音 Bridge API — 注入到页面上下文（用页面的 fetch/cookie）
   // ═══════════════════════════════════════════════════════════
+
+
 
   // ═══════════════════════════════════════════════════════════
   // DM Bridge 库 (protobuf + 辅助函数)，注入页面上下文
@@ -535,10 +539,10 @@ var _DM_PROTO = (function() {
 
       switch (f.fieldNum) {
         case 1: result.conversation_id = utf8ToString(f.value); break;
-        case 4: result.index_in_conversation = String(f.value); break;
-        case 5: result.conversation_short_id = String(f.value); break;
+        case 4: result.index_in_conversation = f.value; break;
+        case 5: result.conversation_short_id = f.value; break;
         case 6: result.message_type = Number(f.value); break;
-        case 7: result.sender = String(f.value); break;
+        case 7: result.sender = f.value; break;
         case 8: result.content = utf8ToString(f.value); break;
       }
     }
@@ -572,7 +576,7 @@ var _DM_PROTO = (function() {
 
       switch (f.fieldNum) {
         case 1: result.conversation_id = utf8ToString(f.value); break;
-        case 2: result.conversation_short_id = String(f.value); break;
+        case 2: result.conversation_short_id = f.value; break;
         case 3: result.conversation_type = Number(f.value); break;
         case 4: result.ticket = utf8ToString(f.value); break;
       }
@@ -883,14 +887,21 @@ async function bridgeFetchJson(label, url, init, readOnly){
   var attempt = 0;
   while (true) {
     attempt++;
-    var r, text, ct;
+    var r, text, ct, timer;
     try {
-      r = await fetch(url, init || {});
+      var requestInit = Object.assign({}, init || {});
+      var controller = new AbortController();
+      if (!requestInit.signal) requestInit.signal = controller.signal;
+      timer = setTimeout(function(){ controller.abort(); }, 12000);
+      r = await fetch(url, requestInit);
       ct = (r.headers && r.headers.get) ? (r.headers.get('content-type') || '') : '';
       text = await r.text();
     } catch (netErr) {
       if (readOnly && attempt === 1) { await new Promise(function(res){setTimeout(res,1000);}); continue; }
-      throw new Error('['+label+'] 网络请求失败: ' + (netErr && netErr.message ? netErr.message : netErr));
+      var reason = netErr && netErr.name === 'AbortError' ? '抖音接口 12 秒未响应' : (netErr && netErr.message ? netErr.message : netErr);
+      throw new Error('['+label+'] 网络请求失败: ' + reason);
+    } finally {
+      if (timer) clearTimeout(timer);
     }
     if (!r.ok) {
       // 4xx/5xx：抖音风控页通常是 200+HTML，所以这里多半是网关错误
@@ -993,7 +1004,7 @@ window.__bridge = {
     try{
       var p=new URLSearchParams(Object.assign(this._q(),{}));
       var info=await bridgeFetchJson('getMyUid','/aweme/v1/web/query/user/?'+p,{credentials:'include'},true);
-      var uid=(info.user||{}).uid||(info.user||{}).short_id||'';
+      var uid=info.user_uid||(info.user||{}).uid||(info.user||{}).short_id||'';
       if(uid){window.__bridge._myUidCache=String(uid);return uid;}
     }catch(e){console.warn('[DM] getMyUid failed:',e.message);}
     // fallback: 从 cookie 或 localStorage 取
@@ -1002,6 +1013,36 @@ window.__bridge = {
     try{var ui=JSON.parse(localStorage.getItem('user_info')||'{}');id=ui.short_id||ui.user_id||ui.uid||'';}catch(e){}
     if(id&&id.length>=3&&id.length<20)return id;
     return '';
+  },
+  // 当前登录账号资料。query/user 接口只返回数值 uid，昵称由抖音页面
+  // 自己保存的 user_info 提供；两者合并后供账号池展示，绝不再使用网页标题。
+  getProfile: async function(){
+    var profile={uid:'',nickname:'',avatar:'',secUid:''};
+    try{
+      var p=new URLSearchParams(Object.assign(this._q(),{}));
+      var info=await bridgeFetchJson('getProfile','/aweme/v1/web/query/user/?'+p,{credentials:'include'},true);
+      profile.uid=String(info.user_uid||(info.user||{}).uid||(info.user||{}).uid_str||'');
+      profile.secUid=String((info.user||{}).sec_uid||'');
+      profile.nickname=String(info.nickname||info.user_nickname||(info.user||{}).nickname||'');
+    }catch(e){ console.warn('[DM] getProfile query failed:',e.message); }
+    try{
+      var raw=localStorage.getItem('user_info')||'';
+      var local=raw?JSON.parse(raw):{};
+      profile.nickname=profile.nickname||String(local.nickname||local.nick_name||'');
+      profile.avatar=String(local.avatarUrl||local.avatar_url||local.avatar||'');
+      profile.secUid=profile.secUid||String(local.uid||local.sec_uid||'');
+    }catch(e){}
+    if(!profile.nickname||!profile.avatar||!profile.secUid){
+      try{
+        var list=JSON.parse(localStorage.getItem('user_info_passport_new')||'[]');
+        var item=Array.isArray(list)?(list[0]||{}):list;
+        profile.nickname=profile.nickname||String(item.nickname||'');
+        profile.avatar=profile.avatar||String(item.avatarUrl||item.avatar_url||'');
+        profile.secUid=profile.secUid||String(item.uid||'');
+      }catch(e){}
+    }
+    if(!profile.uid)profile.uid=String(await this._getMyUid()||'');
+    return profile;
   },
   createConversation: async function(toUserId){
     var keys=_DM_HELPERS.getDMKeys();

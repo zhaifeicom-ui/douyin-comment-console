@@ -1,9 +1,11 @@
-# 🎵 Douyin Comment CLI
+# Comment Console · 抖音 AI 获客工作台
+
+面向共同开发者的完整说明请先阅读 [项目说明与开发交接](PROJECT_GUIDE.md)：包含当前功能、架构、启动方式、接口、已知问题、验证方法和开发优先级。
 
 [![test](https://github.com/zhaifeicom-ui/douyin-comment-console/actions/workflows/test.yml/badge.svg)](https://github.com/zhaifeicom-ui/douyin-comment-console/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> 适用版本: v4 · 最后更新: 2026-08-27 · 维护者: Yht20927
+> 当前 package 版本：2.2.0 · 项目交接说明更新：2026-10-11。下文保留原 CLI 使用说明；当前产品状态以 PROJECT_GUIDE.md 为准。
 
 > 抖音评论运营 CLI 工具。基于 Bridge Framework（Bridge Server + 油猴脚本），支持视频搜索、评论获取、**AI 人格化回复**、**ReplyEngine 独立生成**、**草稿管理**、运营仪表盘。
 
@@ -47,6 +49,20 @@
 
 ## 🚀 快速开始
 
+### Windows 一键启动（推荐）
+
+首次完成依赖安装后，直接双击项目根目录中的 `启动评论工作台.cmd`。脚本会启动本地服务并自动打开工作台；如果服务已经运行，则只打开页面。
+
+也可以在终端运行：
+
+```bash
+npm start
+```
+
+首次打开页面会显示四步使用教程，之后可随时点击右上角“使用教程”重新查看。
+
+### 手动启动
+
 ```bash
 npm install
 
@@ -87,7 +103,8 @@ http://127.0.0.1:19422/app
 - **线索审核**：选择视频、抓取评论、按用户/评论搜索和按意向筛选
 - **AI 意向判定**：结合视频标题/描述（可选截图）与评论，输出分数、标签、阶段、判定依据和下一步动作
 - **AI 回复草稿**：针对单条评论生成 8–45 字草稿，默认只写入本地，需人工确认后发布
-- **设置中心**：意向阈值、视频理解模式、目标客户画像、回复语气与下一步策略
+- **设置中心**：模型服务、意向阈值、视频理解模式、目标客户画像、回复语气与下一步策略
+- **模型服务**：支持用户自备 OpenAI 兼容 API（获取模型、选择模型、测试连接）；平台托管服务作为独立模式预留
 
 推荐操作顺序：
 
@@ -96,7 +113,29 @@ http://127.0.0.1:19422/app
 → AI 判定意向 → 筛选高意向 → 生成草稿 → 人工修改/确认 → 发布回复
 ```
 
-设置保存在 `storage/ui-settings.json`，不会把 Bridge token 或 LLM API Key 注入浏览器页面。前端使用本地 HttpOnly 会话，且只接受来自本机的请求。现有 CLI、Bridge 和高级命令继续保留；工作台只是新增的受控入口，不会删除原有代码。
+业务设置保存在 `storage/ui-settings.json`；自备 API 配置保存在本机 `config.json`。完整的 Bridge token 和 LLM API Key 不会返回给浏览器页面，模型列表与连接测试均由本机服务代发。前端使用本地 HttpOnly 会话，且只接受来自本机的请求。现有 CLI、Bridge 和高级命令继续保留；工作台只是新增的受控入口，不会删除原有代码。
+
+模型服务分为两种模式：
+
+- **使用自己的 API**：用户承担对应接口费用，自行填写 Base URL 与 API Key
+- **使用平台服务**：预留给 Comment Console 服务器，后续可接入账号、套餐、额度和在线计费；未配置服务器时前端会显示“即将开放”且不能误选
+
+### MCP（供 Codex 等助手连接本机工作台）
+
+MCP 服务通过标准输入/输出连接当前电脑上的网页工作台，不需要把本地服务暴露到公网。先运行 `npm start`，再在 MCP 客户端中将命令配置为 `node`，参数为项目目录下的 `mcp/server.mjs`；下面是路径示例，请换成你电脑上的实际位置：
+
+```json
+{
+  "mcpServers": {
+    "comment-console": {
+      "command": "node",
+      "args": ["A:/dy/douyin-comment-console/mcp/server.mjs"]
+    }
+  }
+}
+```
+
+MCP 可读取账号连接状态、启动找客任务、查看任务/线索并生成回复草稿。公开评论和私信发送仍须回到网页工作台人工确认；MCP 不提供直接发送工具。MCP 需要 Node.js 20+，网页工作台本身仍按项目运行环境启动。
 
 ---
 

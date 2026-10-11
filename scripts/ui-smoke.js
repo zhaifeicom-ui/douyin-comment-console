@@ -22,6 +22,10 @@ function checks(page) {
       manualView: vis(document.getElementById('manualView')),
       campaignView: vis(document.getElementById('campaignView')),
       campaignKeyword: vis(document.getElementById('campaignKeyword')),
+      manualKeywords: vis(document.getElementById('campaignManualKeywords')),
+      commentKeywords: vis(document.getElementById('campaignCommentKeywords')),
+      videoTimeRange: vis(document.getElementById('campaignVideoTimeRange')),
+      commentTimeRange: vis(document.getElementById('campaignCommentTimeRange')),
       campaignReplyText: vis(document.getElementById('campaignReplyText')),
       campaignSubmit: vis(document.getElementById('campaignRunButton')),
       campaignButtonDisabled: document.getElementById('campaignRunButton').disabled,
@@ -30,6 +34,7 @@ function checks(page) {
       discoverHintVisible: vis(document.getElementById('discoverHint')),
       badgeText: document.getElementById('connectionBadge').textContent.trim(),
       settingsDialogHidden: !vis(document.getElementById('settingsDialog')),
+      taskCenterButton: vis(document.getElementById('taskCenterButton')),
       overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       buttonText: document.getElementById('campaignRunButton')?.textContent.trim() || '',
       btnRect: (() => {
@@ -86,13 +91,37 @@ async function layoutCheck(page) {
   });
 
   const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await desktop.addInitScript(() => localStorage.setItem('comment-console:tutorial-seen', '1'));
   await desktop.goto(BASE, { waitUntil: 'networkidle' });
   const dChecks = await checks(desktop);
   const dTabs = await tabSwitchCheck(desktop);
   const dLayout = await layoutCheck(desktop);
   await desktop.screenshot({ path: path.join(OUT, 'ui-desktop.png'), fullPage: true });
+  await desktop.click('#settingsButton');
+  await desktop.screenshot({ path: path.join(OUT, 'ui-settings-desktop.png') });
+  const modelSettings = await desktop.evaluate(() => ({
+    dialogOpen: document.getElementById('settingsDialog').open,
+    customModeSelected: document.getElementById('llmModeCustom').checked,
+    managedModeDisabled: document.getElementById('llmModeManaged').disabled,
+    baseUrlVisible: document.getElementById('llmBaseUrl').offsetParent !== null,
+    apiKeyType: document.getElementById('llmApiKey').type,
+    modelValue: document.getElementById('llmModel').value,
+  }));
+  await desktop.click('#closeSettingsButton');
+  await desktop.click('#taskCenterButton');
+  await desktop.screenshot({ path: path.join(OUT, 'ui-tasks-desktop.png') });
+  const taskCenter = await desktop.evaluate(() => ({
+    dialogOpen: document.getElementById('taskCenterDialog').open,
+    summary: document.getElementById('taskCenterSummary').textContent.trim(),
+    listVisible: document.getElementById('taskList').offsetParent !== null,
+  }));
+  await desktop.click('#closeTaskCenterButton');
+  await desktop.click('#tutorialButton');
+  await desktop.screenshot({ path: path.join(OUT, 'ui-tutorial-desktop.png') });
+  const tutorialOpen = await desktop.locator('#tutorialDialog').evaluate(node => node.open);
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await mobile.addInitScript(() => localStorage.setItem('comment-console:tutorial-seen', '1'));
   await mobile.goto(BASE, { waitUntil: 'networkidle' });
   const mChecks = await checks(mobile);
   const mTabs = await tabSwitchCheck(mobile);
@@ -105,5 +134,8 @@ async function layoutCheck(page) {
   console.log('tabSwitch mobile:', JSON.stringify(mTabs));
   console.log('layout desktop:', JSON.stringify(dLayout));
   console.log('layout mobile:', JSON.stringify(mLayout));
+  console.log('model settings:', JSON.stringify(modelSettings));
+  console.log('task center:', JSON.stringify(taskCenter));
+  console.log('tutorial open:', tutorialOpen);
   await browser.close();
 })().catch(err => { console.error('UI_SMOKE_FAIL', err.message); process.exit(1); });

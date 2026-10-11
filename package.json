@@ -1,6 +1,6 @@
 {
   "name": "douyin-comment-cli",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "抖音评论运营 CLI — Bridge Framework（油猴 + WebSocket），含 AI 人格化回复、节奏守卫、SQLite 记忆层、推广引擎",
   "license": "MIT",
   "author": "Yht20927",
@@ -30,6 +30,9 @@
     "node": ">=18"
   },
   "scripts": {
+    "start": "node launcher.js",
+    "mcp": "node mcp/server.mjs",
+    "build:portable": "node scripts/build-portable.js",
     "server": "node server.js",
     "help": "node cli.js help",
     "search": "node cli.js search",
@@ -47,10 +50,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.1.0",
     "better-sqlite3": "^11.10.0",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "playwright-core": "^1.63.0",
     "protobufjs": "^8.6.4",
     "protobufjs-cli": "^2.5.5",

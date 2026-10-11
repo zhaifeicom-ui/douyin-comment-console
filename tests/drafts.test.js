@@ -46,6 +46,14 @@ describe('drafts memory module', () => {
     expect(items.length).toBe(2);
   });
 
+  it('同一评论重复保存时更新待审核草稿而不是新增重复项', () => {
+    const first = drafts.save({ awemeId: 'aweme_dedup', replyToCid: 'cid_1', text: '第一版' });
+    const second = drafts.save({ awemeId: 'aweme_dedup', replyToCid: 'cid_1', text: '第二版' });
+    expect(second).toBe(first);
+    expect(drafts.list({ awemeId: 'aweme_dedup' })).toHaveLength(1);
+    expect(drafts.get(first).text).toBe('第二版');
+  });
+
   it('should filter by posted status', () => {
     const id = drafts.save({ awemeId: 'aweme_004', text: '未发布' });
     drafts.markPosted(id);
@@ -60,6 +68,12 @@ describe('drafts memory module', () => {
     drafts.markPosted(id);
     const d = drafts.get(id);
     expect(d.posted).toBe(1);
+  });
+
+  it('发布评论后可按评论标记对应草稿', () => {
+    const id = drafts.save({ awemeId: 'aweme_posted', replyToCid: 'cid_posted', text: '待发布' });
+    expect(drafts.markPostedByComment('aweme_posted', 'cid_posted')).toBe(true);
+    expect(drafts.get(id).posted).toBe(1);
   });
 
   it('should remove a draft', () => {

@@ -8,12 +8,19 @@ const USERSCRIPT = path.join(DIR, 'douyin.user.js');
 const DM_LIB = path.join(DIR, 'dm-bridge-lib.js');
 const DM_FUNCS = path.join(DIR, 'dm-bridge-funcs.js');
 
-const userscript = fs.readFileSync(USERSCRIPT, 'utf8');
+// 统一换行，避免 Windows CRLF 让注入标记无法匹配；同时让脚本可重复构建。
+let userscript = fs.readFileSync(USERSCRIPT, 'utf8').replace(/\r\n/g, '\n');
 const dmLib = fs.readFileSync(DM_LIB, 'utf8');
 const dmFuncs = fs.readFileSync(DM_FUNCS, 'utf8');
 
 // Backup
 fs.writeFileSync(USERSCRIPT + '.bak', userscript, 'utf8');
+
+// 清理上一次构建注入的三段内容，保证重复执行不会产生重复的 __bridge 方法。
+userscript = userscript
+  .replace(/\n  \/\/ ═+\n  \/\/ DM Bridge 库 \(protobuf \+ 辅助函数\)，注入页面上下文\n  \/\/ ═+\n  var DM_BRIDGE_CODE = \(function \(\) \{\/\*[\s\S]*?  console\.log\('\[Bridge:Douyin\] DM Bridge lib injected'\);/g, '\n')
+  .replace(/\n  \/\/ ── 私信 \(DM\) ──\n[\s\S]*?(?=  getDetail: async function\(awemeId\)\{)/, '\n')
+  .replace(/\n  \/\/ ── Auto-connect DM WebSocket \(3s delay\) ──\n  setTimeout\(function\(\) \{\n    try \{ \(0, unsafeWindow\.eval\)\('[^']*'\); \} catch\(e\) \{\}\n  \}, 3000\);\n/, '\n');
 
 // ═══ STEP 1: Insert DM_BRIDGE_CODE block before BRIDGE_CODE ═══
 const dmInjection = [

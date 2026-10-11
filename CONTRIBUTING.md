@@ -1,6 +1,6 @@
 # Contributing
 
-> 适用版本: v3 · 最后更新: 2026-07-07 · 维护者: Yht20927
+> 当前工作台的架构、接口、已知问题与协作分工见 [PROJECT_GUIDE.md](PROJECT_GUIDE.md)。本页主要保留 CLI 开发约定。
 
 感谢参与 douyin-cli！本文档说明如何搭建开发环境、跑测试、以及代码约定。
 
@@ -9,19 +9,19 @@
 ## 开发环境
 
 ```bash
-git clone https://github.com/Yht20927/douyin-cli.git
-cd douyin-cli
+git clone https://github.com/zhaifeicom-ui/douyin-comment-console.git
+cd douyin-comment-console
 npm install            # better-sqlite3 原生模块，需预编译
 cp config.example.json config.json   # 填 bridge.token + llm.api_key
 
 # Bridge Server（常驻，跨 session 复用）
-bash scripts/bridge.sh ensure
+node server.js
 
 # Chrome 装 Tampermonkey + scripts/douyin.user.js，打开 douyin.com 并登录
 node cli.js my          # 验证连通
 ```
 
-依赖：Node.js 18+、Chrome + Tampermonkey、（可选）OpenAI 兼容 LLM key。
+开发建议使用 Node.js 24；MCP 需要 Node.js 20+。另需 Chrome / Edge + Tampermonkey；AI 功能需要兼容的模型 API。
 
 ---
 

@@ -64,7 +64,7 @@ describe('WebSocketHub 心跳', () => {
     // maxFailures=2 → 第 3 个 tick 触发关闭；并跑时计时器可能被挤压，留足裕量
     const code = await Promise.race([
       closedCode,
-      sleep(HEARTBEAT_INTERVAL * (MAX_FAILURES + 10)).then(() => 'not-closed'),
+      sleep(HEARTBEAT_INTERVAL * (MAX_FAILURES + 50)).then(() => 'not-closed'),
     ]);
 
     expect(code).toBe(4004);
@@ -95,8 +95,10 @@ describe('WebSocketHub 心跳', () => {
     expect(ws.readyState).toBe(WebSocket.OPEN);
     expect(registry.totalConnections).toBe(1);
 
+    const closed = new Promise(resolve => ws.once('close', resolve));
     ws.close();
-    await sleep(20);
+    await Promise.race([closed, sleep(1000)]);
+    for (let i = 0; i < 100 && registry.totalConnections > 0; i++) await sleep(10);
     expect(registry.totalConnections).toBe(0);
   }, 10000);
 

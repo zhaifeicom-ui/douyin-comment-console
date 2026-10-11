@@ -327,11 +327,73 @@ describe('Router App API（一体化运营）', () => {
     expect(res.body.error).toContain('抖音尚未连接');
   });
 
+  it('GET /api/app/jobs 返回任务中心列表并传递筛选参数', async () => {
+    const calls = [];
+    const app = {
+      listJobs(options) {
+        calls.push(options);
+        return [{ id: 'job-2', status: 'running', progress: 42 }];
+      },
+    };
+    const router = new Router({ registry, wsHub: makeHubStub(), token: '', app });
+    const pageRes = makeRes();
+    await router.handle(makeReq({ url: '/app' }), pageRes);
+    const session = decodeURIComponent(pageRes._headers['Set-Cookie'].match(/app_session=([^;]+)/)[1]);
+    const res = makeRes();
+    await router.handle(makeReq({
+      url: '/api/app/jobs?limit=25&status=running&type=campaign%3Arun',
+      headers: { cookie: `app_session=${session}` },
+    }), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.jobs).toEqual([{ id: 'job-2', status: 'running', progress: 42 }]);
+    expect(calls).toEqual([{ limit: '25', status: 'running', type: 'campaign:run' }]);
+  });
+
   it('无会话访问 /api/app/* 返回 401', async () => {
     const router = new Router({ registry, wsHub: makeHubStub(), token: '' });
     const res = makeRes();
     await router.handle(makeReq({ url: '/api/app/settings' }), res);
     expect(res.statusCode).toBe(401);
     expect(res.body.error).toContain('App session expired');
+  });
+
+  it('模型配置 API 只返回脱敏信息并支持获取模型和测试连接', async () => {
+    const calls = [];
+    const llmSettings = {
+      getPublicConfig: () => ({ mode: 'custom', apiKeyConfigured: true, apiKeyMasked: 'sk-••••7890' }),
+      saveConfig: body => ({ internal: { model: body.model }, public: { mode: body.mode, model: body.model, apiKeyConfigured: true } }),
+      fetchModels: async body => { calls.push(['models', body]); return { models: ['model-a'] }; },
+      testConnection: async body => { calls.push(['test', body]); return { model: body.model, latencyMs: 12 }; },
+    };
+    const app = { updateLlmConfig: config => calls.push(['save', config]) };
+    const router = new Router({ registry, wsHub: makeHubStub(), token: '', app, llmSettings });
+    const pageRes = makeRes();
+    await router.handle(makeReq({ url: '/app' }), pageRes);
+    const session = decodeURIComponent(pageRes._headers['Set-Cookie'].match(/app_session=([^;]+)/)[1]);
+    const headers = { cookie: `app_session=${session}` };
+
+    const configRes = makeRes();
+    await router.handle(makeReq({ url: '/api/app/llm/config', headers }), configRes);
+    expect(configRes.body.config.apiKeyMasked).toBe('sk-••••7890');
+    expect(configRes.body.config.apiKey).toBeUndefined();
+
+    const saveRes = makeRes();
+    await router.handle(makeReq({ method: 'POST', url: '/api/app/llm/config', headers, body: { mode: 'custom', model: 'model-a' } }), saveRes);
+    expect(saveRes.body.config.model).toBe('model-a');
+
+    const modelsRes = makeRes();
+    await router.handle(makeReq({ method: 'POST', url: '/api/app/llm/models', headers, body: { apiKey: 'temporary' } }), modelsRes);
+    expect(modelsRes.body.models).toEqual(['model-a']);
+
+    const testRes = makeRes();
+    await router.handle(makeReq({ method: 'POST', url: '/api/app/llm/test', headers, body: { model: 'model-a' } }), testRes);
+    expect(testRes.body.latencyMs).toBe(12);
+    expect(calls.map(item => item[0])).toEqual(['save', 'models', 'test']);
+
+    const applyRes = makeRes();
+    await router.handle(makeReq({ method: 'POST', url: '/api/app/llm/test', headers, body: { mode: 'custom', model: 'model-a', apply: true } }), applyRes);
+    expect(applyRes.body.applied).toBe(true);
+    expect(applyRes.body.config.model).toBe('model-a');
+    expect(calls.slice(-2).map(item => item[0])).toEqual(['test', 'save']);
   });
 });

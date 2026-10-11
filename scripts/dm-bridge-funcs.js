@@ -7,7 +7,7 @@
     try{
       var p=new URLSearchParams(Object.assign(this._q(),{}));
       var info=await bridgeFetchJson('getMyUid','/aweme/v1/web/query/user/?'+p,{credentials:'include'},true);
-      var uid=(info.user||{}).uid||(info.user||{}).short_id||'';
+      var uid=info.user_uid||(info.user||{}).uid||(info.user||{}).short_id||'';
       if(uid){window.__bridge._myUidCache=String(uid);return uid;}
     }catch(e){console.warn('[DM] getMyUid failed:',e.message);}
     // fallback: 从 cookie 或 localStorage 取
@@ -16,6 +16,36 @@
     try{var ui=JSON.parse(localStorage.getItem('user_info')||'{}');id=ui.short_id||ui.user_id||ui.uid||'';}catch(e){}
     if(id&&id.length>=3&&id.length<20)return id;
     return '';
+  },
+  // 当前登录账号资料。query/user 接口只返回数值 uid，昵称由抖音页面
+  // 自己保存的 user_info 提供；两者合并后供账号池展示，绝不再使用网页标题。
+  getProfile: async function(){
+    var profile={uid:'',nickname:'',avatar:'',secUid:''};
+    try{
+      var p=new URLSearchParams(Object.assign(this._q(),{}));
+      var info=await bridgeFetchJson('getProfile','/aweme/v1/web/query/user/?'+p,{credentials:'include'},true);
+      profile.uid=String(info.user_uid||(info.user||{}).uid||(info.user||{}).uid_str||'');
+      profile.secUid=String((info.user||{}).sec_uid||'');
+      profile.nickname=String(info.nickname||info.user_nickname||(info.user||{}).nickname||'');
+    }catch(e){ console.warn('[DM] getProfile query failed:',e.message); }
+    try{
+      var raw=localStorage.getItem('user_info')||'';
+      var local=raw?JSON.parse(raw):{};
+      profile.nickname=profile.nickname||String(local.nickname||local.nick_name||'');
+      profile.avatar=String(local.avatarUrl||local.avatar_url||local.avatar||'');
+      profile.secUid=profile.secUid||String(local.uid||local.sec_uid||'');
+    }catch(e){}
+    if(!profile.nickname||!profile.avatar||!profile.secUid){
+      try{
+        var list=JSON.parse(localStorage.getItem('user_info_passport_new')||'[]');
+        var item=Array.isArray(list)?(list[0]||{}):list;
+        profile.nickname=profile.nickname||String(item.nickname||'');
+        profile.avatar=profile.avatar||String(item.avatarUrl||item.avatar_url||'');
+        profile.secUid=profile.secUid||String(item.uid||'');
+      }catch(e){}
+    }
+    if(!profile.uid)profile.uid=String(await this._getMyUid()||'');
+    return profile;
   },
   createConversation: async function(toUserId){
     var keys=_DM_HELPERS.getDMKeys();

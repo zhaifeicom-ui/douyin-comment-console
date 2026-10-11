@@ -11,13 +11,21 @@
     "maxBodySize": 67108864
   },
   "llm": {
-    "_comment": "支持 OpenAI 兼容 API 和 Anthropic 原生 Messages API。base_url 含 anthropic.com 则自动切换。",
+    "_comment": "mode=custom 使用用户自己的 API；mode=managed 使用下方 managed_service。支持 OpenAI 兼容 API 和 Anthropic 原生 Messages API。",
+    "mode": "custom",
     "api_key": "",
     "base_url": "https://api.openai.com/v1",
     "model": "gpt-4o-mini",
     "max_tokens": 4096,
     "timeout_ms": 60000,
     "max_retries": 3
+  },
+  "managed_service": {
+    "_comment": "预留的平台模型服务配置。服务端开放后填写；桌面版用户无需看到或管理上游模型 API Key。",
+    "label": "Comment Console 平台服务",
+    "base_url": "",
+    "access_token": "",
+    "model": ""
   },
   "vision": {
     "_comment": "视觉/多模态设置。screenshots 模式需要本地安装 ffmpeg。DOUYIN_DISABLE_VISION=1 可禁用。",
